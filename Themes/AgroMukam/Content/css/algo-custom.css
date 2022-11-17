@@ -1,0 +1,287 @@
+﻿.search-container {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+}
+
+.as-sidebar {
+  min-width: 300px;
+  max-width: 300px;
+  padding: 15px;
+  transition: all 0.3s;
+}
+
+  .as-sidebar.active {
+    margin-left: -300px;
+  }
+
+.as-content {
+  width: 100%;
+  padding: 20px;
+  min-height: 100vh;
+  transition: all 0.3s;
+}
+
+.as-filter-toggler {
+    position: fixed;
+    left: 0;
+    bottom: 85px;
+    width: 100%;
+}
+
+
+@media (max-width: 992px) {
+  .as-sidebar {
+    margin-left: -300px;
+  }
+
+    .as-sidebar.active {
+      margin-left: 0;
+    }
+}
+
+/**
+    Search Items
+*/
+.ais-Hits,
+.ais-Hits-list {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.ais-Hits-item {
+  flex: 1;
+  padding: 3px;
+  min-width: 145px;
+  max-width: 175px;
+  background: transparent;
+  transition: box-shadow .3s;
+  box-shadow: none;
+}
+
+
+    .ais-Hits-item:hover {
+      box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+    }
+
+.hit-image img {
+    max-width: 100%;
+    height: 150px;
+    object-fit: contain;
+}
+
+.hit-name {
+    font-size: 14px;
+    line-height: 16px;
+    height: 48px;
+    overflow: hidden;
+}
+
+.hit-price {
+  height: 42px;
+}
+
+.hit-price .current-price {
+  font-size: 18px;
+  line-height: 20px;
+}
+
+.hit-price .old-price {
+  
+}
+
+.hit-reviews {
+    font-size: 12px;
+}
+
+
+/**
+    Pagination
+*/
+.ais-Pagination {
+  display: flex;
+  margin-top: 20px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+
+/** Filtering */
+
+.ais-refinement-list--item {
+  height: 20px;
+}
+
+.ais-refinement-list--list > form {
+    display: none !important;
+}
+
+.ais-root {
+
+}
+
+.ais-header {
+  font-weight: bold;
+}
+
+.ais-body {
+  padding-top: 5px;
+  padding-left: 5px;
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.ais-show-more {
+    cursor: pointer;
+}
+
+.form-check-label {
+    height: 22px;
+    overflow: hidden;
+}
+
+.ais-RangeInput-form {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+.ais-RangeInput-label {
+  width: 44%;
+  margin-bottom: 0;
+}
+
+.ais-range-input--inputMin,
+.ais-range-input--inputMax {
+  min-width: 100%;
+  max-width: 100%;
+}
+
+.ais-RangeInput-input {
+  height: 24px;
+  font-size: 12px;
+  line-height: 14px;
+  width: 100%;
+}
+
+.ais-RangeInput-submit {
+  margin-top: 5px;
+  border: 1px solid #015D1A;
+  color: #015D1A;
+  padding: 0 50px;
+  height: 25px;
+}
+
+span.ais-hierarchical-menu--count,
+.ais-refinement-list--count {
+  float: right;
+  background: #69A41F;
+  color: #fff;
+  width: 20px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.ais-hierarchical-menu--item {
+  margin-bottom: 2px;
+}
+
+.ais-hierarchical-menu--list__lvl1, .ais-hierarchical-menu--list__lvl2 {
+  margin-top: 2px;
+}
+
+.cr-item-wrap {
+  background: rgba(105, 164, 31, .2) !important;
+  margin: 2px 3px;
+  padding: 5px 10px;
+  font-size: 12px;
+  line-height: 14px;
+}
+  .cr-item-wrap button {
+    border: none;
+    background: #69A41F;
+    margin-left: 5px;
+    font-size: 10px;
+    line-height: 12px;
+    color: #fff;
+  }
+
+li.ais-RefinementList-item {
+  margin-bottom: 2px;
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.ais-HierarchicalMenu-showMore, .ais-Menu-showMore, .ais-RefinementList-showMore {
+  margin-top: 2px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: #69A41F;
+  padding: 0;
+}
+  .ais-HierarchicalMenu-showMore:hover,
+  .ais-Menu-showMore:hover,
+  .ais-RefinementList-showMore:hover {
+    background: transparent;
+    color: #015D1A;
+  }
+
+.ais-RatingMenu-starIcon {
+  fill: #f5a623;
+}
+
+
+.ais-HierarchicalMenu-link:before {
+  transform: rotate(180deg);
+}
+.ais-HierarchicalMenu-item--selected > div > .ais-HierarchicalMenu-link:before {
+  transform: rotate(0deg);
+}
+
+
+/***/
+.autocomplete-hits-item {
+  color: #343a40;
+}
+  .autocomplete-hits-item:hover {
+    color: #69A41F;
+  }
+
+  .autocomplete-hits-item img {
+    height: 35px;
+    width: 35px;
+  }
+
+.autocomplete-hits-item span {
+  font-size: 14px;
+  line-height: 18px;
+}
+
+  .autocomplete-hits-item mark,
+  .autocomplete-hits-item .mark {
+    padding: 0;
+    background-color: rgba(105, 164, 31, .3);
+  }
+
+.aa-SourceFooter > div {
+  background: rgba(105, 164, 31, .1);
+}
+
+
+
+.aa-ItemContent mark {
+    padding: 0 !important;
+}
+
+.aa-List .aa-Item {
+  min-height: auto;
+  padding: 4px;
+  font-size: 14px;
+  line-height: 16px;
+}

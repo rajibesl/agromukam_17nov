@@ -1,0 +1,78 @@
+﻿@model Nop.Web.Models.Customer.CustomerWishRequestCreateModel
+
+@{
+    ViewData["Title"] = "CustomerWishRequest";
+}
+@{
+    Layout = "_ColumnsOne";
+
+}
+<div class="page customer-wish-request pt-5 container" style="max-width:650px;">
+
+    <h4 class="mb-3 text-greenish">
+        <a href="@Url.RouteUrl("CustomerWishRequestAll")">
+            <i class="fas fa-long-arrow-left"></i>
+            Go Back to WishRequest List
+        </a>
+    </h4>
+
+    <div class="row">
+        <div class="col">
+            <div class="card border-0 shadow">
+                <div class="card-body">
+                    <h3>
+                        Submit a Wish Request
+                    </h3>
+                    <hr class="mt-3 mb-4" style="border: none; height: 1px; background: #eee;" />
+
+                    <form asp-action="Create">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="form-group">
+                            <label asp-for="CategoryId" class="control-label"></label>
+                            <select class="custom-select" id="CategoryId" name="CategoryId">
+                                @foreach (var category in Model.Categories)
+                                {
+                                    <option value=" @category.Value">
+                                        @category.Text
+                                    </option>
+                                }
+                            </select>
+                            <span asp-validation-for="CategoryId" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Title" class="control-label"></label>
+                            <input asp-for="Title" class="form-control" />
+                            <span asp-validation-for="Title" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Details" class="control-label"></label>
+                            <textarea asp-for="Details" class="form-control" rows="5" style="height: auto !important;"></textarea>
+                            <span asp-validation-for="Details" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="ExpectedPrice" class="control-label"></label>
+                            <input asp-for="ExpectedPrice" class="form-control" />
+                            <span asp-validation-for="ExpectedPrice" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="ExpectedStartDateUtc" class="control-label"></label>
+                            <input asp-for="ExpectedStartDateUtc" class="form-control" />
+                            <span asp-validation-for="ExpectedStartDateUtc" class="text-danger"></span>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="ExpectedEndDateUtc" class="control-label"></label>
+                            <input asp-for="ExpectedEndDateUtc" class="form-control" />
+                            <span asp-validation-for="ExpectedEndDateUtc" class="text-danger"></span>
+                        </div>
+                        <div class="form-group mt-3">
+                            <input type="submit" value="Submit" class="btn btn-success bg-greenish rounded-0 pl-5 pr-5 shadow border-0" />
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

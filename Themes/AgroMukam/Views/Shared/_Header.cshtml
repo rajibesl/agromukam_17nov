@@ -1,0 +1,511 @@
+﻿@using Nop.Core
+@using Nop.Core.Domain.Customers
+@using Nop.Core.Domain.Orders
+@using Nop.Services.Common
+@using Nop.Services.Customers
+@using Nop.Services.Vendors
+@using Nop.Services.Orders
+@using Nop.Services.Seo
+@inject ICustomerService customerService
+@inject IGenericAttributeService genericAttributeService
+@inject IUrlRecordService _urlRecordService
+@inject IWorkContext workContext
+@inject IShoppingCartService _shoppingCartService
+@inject IOrderService _orderService
+@inject IVendorService _vendorService
+
+@{
+    Layout = null;
+    var customer = await workContext.GetCurrentCustomerAsync();
+    var isLoggedIn = await customerService.IsRegisteredAsync(customer);
+    var isVendor = await customerService.IsVendorAsync(customer);
+    var isAdvisor = await customerService.IsInCustomerRoleAsync(customer, "Advisors");
+    var myAccountHref = isLoggedIn ? Url.RouteUrl("CustomerInfo") : Url.RouteUrl("Login");
+    //var cartItems = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.AwaitingConfirmation);
+    //var wishlistItems = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.Wishlist);
+
+    var orders = new List<Order>();
+    if (isLoggedIn)
+        orders = (await _orderService.SearchOrdersAsync(customerId: customer.Id, pageSize: 3)).ToList();
+}
+
+@await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.HeaderBefore })
+
+@* Top Links *@
+<nav class="navbar p-md-0 navbar-expand-sm navbar-light top-links bg-light-green d-none d-lg-block" style="background: #69A41F">
+    <div class="container-fluid">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTop4"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarTop4">
+            <ul class="navbar-nav mr-auto">
+                @if (!isLoggedIn || !isVendor)
+                {
+                    <li class="nav-item pl-1 pr-1">
+                        <a href="/vendor-login" class="nav-link text-white">
+                            <i class="fas fa-funnel-dollar"></i> @T("Topmenu.StartSelling")
+                        </a>
+                    </li>
+                }
+                <li class="nav-item pl-1 pr-1">
+                    <a href="@Url.RouteUrl("AgroProductRequestAll")" class="nav-link text-white">
+                        <i class="fas fa-hand-sparkles"></i> @T("TopMenu.ProductRequest")
+                    </a>
+                </li>
+                @if (isLoggedIn)
+                {
+                    <li class="nav-item pl-1 pr-1">
+                        <a href="@Url.RouteUrl("Prescriptions")" class="nav-link text-white">
+                            <i class="fas fa-file-prescription"></i> @T("TopMenu.Prescriptions")
+                        </a>
+                    </li>
+                    @if (isVendor)
+                    {
+
+                        var vendor = await _vendorService.GetVendorByIdAsync(customer.VendorId);
+                        if (vendor.Active)
+                        {
+                            var seName = await _urlRecordService.GetSeNameAsync(vendor, 0, true, false);
+                            <li class="nav-item pl-1 pr-1">
+                                <a href="@seName" class="nav-link bg-warning font-weight-bold">
+                                    <i class="fas fa-store"></i>
+                                    @T("TopMenu.Store")
+                                </a>
+                            </li>
+                        }
+                        <li class="nav-item pl-1 pr-1 dropdown">
+                            <a href="#" class="nav-link text-white dropdown-toggle" data-toggle="dropdown">
+                                @T("TopMenu.Products")
+                                <i class="fas fa-caret-down"></i>
+                            </a>
+                            <div class="dropdown-menu border-0 rounded-0 shadow">
+                                <a class="dropdown-item" href="/Admin/Product/List">
+                                    @T("Topmenu.ManageProducts")
+                                </a>
+                                <a class="dropdown-item" href="/Admin/Product/Create">
+                                    @T("Topmenu.AddProducts")
+                                </a>
+                            </div>
+                        </li>
+                        <li class="nav-item pl-1 pr-1 dropdown">
+                            <a class="nav-link text-white" href="/Admin/AgroOrderManagement/OrdersToAcceptIndex">
+                                @T("Topmenu.ManageOrders")
+                            </a>
+                        </li>
+                    }
+                }
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item pl-1 pr-1 dropdown">
+                    @await Component.InvokeAsync("LanguageSelector")
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+@* End of Top Links *@
+
+@* Header Mid - Main Header  *@
+<section class="header-main border-bottom d-none d-lg-block">
+    <div class="container-fluid">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                @await Component.InvokeAsync("Logo")
+            </div>
+            <div class="col-5 pl-5">
+                @await Component.InvokeAsync("SearchBox")
+            </div>
+            <div class="col">
+                <div class="widgets-wrap float-md-right position-relative d-flex flex-row">
+                    <a href="@Url.RouteUrl("ShoppingCart")" class="widget-header shopping-cart mr-2">
+                        <div class="icon">
+                            <i class="icon-sm rounded-circle border fa fa-shopping-cart"></i>
+                            <span class="notify bg-light-green cart-qty">(0)</span>
+                        </div>
+                    </a>
+                    <a href="@Url.RouteUrl("Wishlist")" class="widget-header wish-list mr-2 d-none d-xl-block">
+                        <div class="icon">
+                            <i class="icon-sm rounded-circle border fa fa-heart"></i>
+                            <span class="notify bg-light-green wishlist-qty">(0)</span>
+                        </div>
+                    </a>
+                    @if (isLoggedIn)
+                    {
+                        <a href="@Url.RouteUrl("Prescriptions")" class="widget-header wish-list mr-2 d-none d-xl-block">
+                            <div class="icon">
+                                <i class="icon-sm rounded-circle border fa fa-file-prescription"></i>
+                                <span class="notify bg-light-green prescriptions-qty">(0)</span>
+                            </div>
+                        </a>
+                    }
+                    <div class="widget-header dropdown position-static">
+                        <a href="#" data-toggle="dropdown" data-offset="20,10" aria-expanded="false">
+                            <div class="icontext">
+                                <div class="icon">
+                                    <i class="icon-sm rounded-circle border fa fa-user"></i>
+                                </div>
+                                <div class="text" style="max-width: initial;">
+                                    @if (isLoggedIn)
+                                    {
+                                        var firstName = await genericAttributeService.GetAttributeAsync<string>(customer, NopCustomerDefaults.FirstNameAttribute);
+                                        <small class="text-muted">@T("Toplinks. Welcomeback,") @firstName</small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted">@T("Toplinks.Hello,Login")</small>
+                                    }
+                                    <div>@T("Toplinks.Myaccount")<i class="fa fa-caret-down"></i> </div>
+                                </div>
+                            </div>
+                        </a>
+                        <div class="dropdown-menu border-0 rounded-0 shadow  mt-3" style="min-width: 100%;">
+                            @if (isLoggedIn)
+                            {
+                            <div class="pt-2 pb-2">
+                                <a class="dropdown-item pt-2 pb-2 border-bottom" href="@Url.RouteUrl("CustomerInfoWelcome")">
+                                    <i class="fas fa-user-tie mr-2"></i>
+                                    @T("TopLinks.ManageMyAccount")
+                                </a>
+                                @if (await customerService.IsAdminAsync(customer) || isAdvisor || isVendor)
+                                {
+                                    <a class="dropdown-item pt-2 pb-2 border-bottom" href="/Admin">
+                                        <i class="fas fa-boxes mr-2"></i>
+                                        @T("TopLinks.MyDashboard")
+                                    </a>
+                                } 
+                                
+                                @if (!isVendor) 
+                                {
+                                    <a class="dropdown-item pt-2 pb-2" href="@Url.RouteUrl("CompareProducts")">
+                                        <i class="fas fa-not-equal mr-2"></i>
+                                        @T("TopLinks.CompareProducts")
+                                    </a>
+                                }
+
+                                <a class="dropdown-item pt-2 pb-2" href="@Url.RouteUrl("Logout")">
+                                    <i class="fas fa-power-off mr-2"></i>
+                                    @T("TopLinks.Logout")
+                                </a>
+                            </div>
+                            }
+                            else
+                            {
+                                <div class="p-3 text-center">
+                                    <a class="btn btn-sm pl-4 pr-4 bg-light-green text-white rounded-0" href="@Url.RouteUrl("Login")"> @T("Toplinks.Login") </a>
+                                    <hr />
+                                    <p>
+                                        @T("Toplinks.NotACustomer?")
+                                        <br>
+                                        <a href="@Url.RouteUrl("Register")" class="text-light-green">
+                                            @T("Toplinks.StartHere")
+                                        </a>
+                                    </p>
+                                </div>
+                            }
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+@* End of Header Mid - Main Header  *@
+
+@* Top Menu - Main Navigation *@
+<nav class="navbar navbar-main navbar-expand-lg p-1 top-menu bg-white d-none d-lg-block">
+    <div class="container-fluid">
+        <a class="navbar-brand p-0" href="#" style="display: none;">
+            <img src="/Themes/AgroMukam/Content/images/logo-new-small.png" class="logo logo-small" alt="">
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#topMenu"
+                aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="topMenu">
+            <ul class="navbar-nav position-relative w-100">
+                <li class="nav-item ni-shop-dropdown dropdown mr-3 position-static">
+                    <a class="btn rounded-0 btn-show-all-categories text-muted" href="#" data-toggle="dropdown">
+                        <i class="fas fa-stream mr-3"></i>
+                        @T("Toplinks.ShopbyCategory")
+                        <i class="fas fa-chevron-down toggle-icon float-right mt-1 ml-5"></i>
+                    </a>
+                    <div class="dropdown-menu shop-dropdown w-100 bg-transparent border-0 pt-0 mt-0"
+                         aria-labelledby="navbarDropdown">
+                        <div class="bg-white shadow" style="border-top: 5px solid rgba(105, 164, 31, .1);">
+                            <div class="d-flex top-menu-wrap">
+                                @await Component.InvokeAsync("TopMenu")
+                            </div>
+                        </div>
+                    </div>
+                </li>
+                @*<li class="nav-item pl-2 pr-2">
+                    <a class="nav-link" href="@Url.RouteUrl("Promotions")">
+                        <i class="fas fa-bullhorn mr-1"></i>
+                        @T("Toplinks.Promo")
+                    </a>
+                </li>*@
+                <li class="nav-item dropdown pl-2 pr-2">
+                    <a class="nav-link" href="#" data-toggle="dropdown">
+                        @T("Toplinks.TrackMyOrder")
+                        <i class="fas fa-chevron-down float-right ml-2" style="margin-top: 2px;"></i>
+                    </a>
+                    <div class="dropdown-menu border-0 rounded-0 shadow p-4" style="width: 280px;">
+                        @if (isLoggedIn)
+                        {
+                            <h6 class="text-muted-x text-uppercase mb-2">
+                                @T("Toplinks.MyLastOrders")
+                            </h6>
+
+                            @if (orders.Any())
+                            {
+                                <ul>
+                                    @foreach (var order in orders)
+                                    {
+                                        <li>
+                                            <span class="text-light-green cursor-pointer"
+                                                  onclick="setLocation('@Url.RouteUrl("OrderDetails", new { orderId = order.Id })')"
+                                                  style="font-size: 12px; line-height: 14px; display: block;">
+                                                @order.CreatedOnUtc.ToString("dd/MM/yyyy") - #@order.GeneratedOrderNumber
+                                            </span>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <p class="text-muted-x"> @T("Toplinks.YouDontHaveAnyOrder")</p>
+                            }
+                        }
+
+                        <form asp-route="TrackOrder" method="get">
+
+                            <h6 class="text-muted-x text-uppercase mb-2 mt-3">
+                                @T("Toplinks.Trackmyorder.Trackmyorder")
+                            </h6>
+
+                            @if (!isLoggedIn)
+                            {
+                                <div class="form-group mb-0">
+                                    <label for="username" class="mb-0" style="font-size: 14px">@T("Toplinks.Trackmyorder.Username")</label>
+                                    <input type="text"
+                                           class="form-control"
+                                           id="username"
+                                           name="username"
+                                           placeholder="e.g: 8801711223344"
+                                           data-val="true"
+                                           data-val-required="Username is required." />
+
+                                    <span class="field-validation-error mt-1"
+                                          data-valmsg-for="username"
+                                          data-valmsg-replace="true"></span>
+                                </div>
+                            }
+
+                            <div class="form-group">
+                                <label for="orderNumber" class="mb-0" style="font-size: 14px">@T("Toplinks.Trackmyorder.OrderNo"). </label>
+                                <div class="input-group input-group-sm mb-3">
+                                    <input type="text"
+                                           class="form-control"
+                                           id="orderNumber"
+                                           name="orderNumber"
+                                           placeholder="e.g: 01122A000000"
+                                           data-val="true"
+                                           data-val-required="Order No. is required." />
+                                    <div class="input-group-append">
+                                        <button class="btn bg-light-green text-white"
+                                                id="button-addon2">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </button>
+                                    </div>
+
+
+                                    <span class="field-validation-error mt-1"
+                                          data-valmsg-for="orderNumber"
+                                          data-valmsg-replace="true"></span>
+                                </div>
+                            </div>
+
+                        </form>
+
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+@* End of Top Menu - Main Navigaion *@
+
+
+@* Mobile Top bar *@
+@* Mobile Bottom Nav *@
+@* Mobile Bottom Navigation *@
+<section class="mobile-header-main pt-2 pb-2 bg-light-green d-lg-none">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-auto align-items-center d-flex">
+                <i class="fas fa-stream ml-2 fa-2x mobile-offcanvas-toggler cursor-pointer" style="color: rgba(255, 255, 255, .8);"></i>
+            </div>
+            <div class="col pr-4">
+                <div id="autocompleteMobile"></div>
+            </div>
+        </div>
+    </div>
+</section>
+@*  *@
+<nav class="navbar fixed-bottom navbar-light navbar-expand bg-white shadow-reverse d-lg-none">
+    <div class="collapse navbar-collapse" id="navbarText">
+        <ul class="navbar-nav w-100 nav-fill">
+            <li class="nav-item">
+                <a class="nav-link text-muted p-1" href="/">
+                    <img src="/Themes/AgroMukam/Content/images/logo-new-small.png"
+                         class="d-block ml-auto mr-auto"
+                         style="max-width: 26px;" />
+                    <span class="d-block text-center mt-1" style="font-size: 12px;">
+                        Home
+                    </span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-muted p-1 exp-mob-menu" href="@Url.RouteUrl("AllCategories")">
+                    <i class="fas fa-th d-block text-center" style="font-size: 22px;"></i>
+                    <span class="d-block text-center mt-1" style="font-size: 12px;">
+                        Categories
+                    </span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-muted p-1" href="/cart">
+                    <i class="fas fa-shopping-cart d-block text-center" style="font-size: 22px;"></i>
+                    <span class="d-block text-center mt-1" style="font-size: 12px;">
+                        Cart
+                    </span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-muted p-1" href="@myAccountHref">
+                    <i class="fas fa-user d-block text-center" style="font-size: 22px;"></i>
+                    <span class="d-block text-center mt-1" style="font-size: 12px;">
+                        Account
+                    </span>
+                </a>
+            </li>
+            @if (isLoggedIn)
+            {
+                <li class="nav-item">
+                    <a class="nav-link text-muted p-1" href="@Url.RouteUrl("Prescriptions")">
+                        <i class="fas fa-file-prescription d-block text-center" style="font-size: 22px;"></i>
+                        <span class="d-block text-center mt-1" style="font-size: 12px;">
+                            Prescriptions
+                        </span>
+                    </a>
+                </li>
+            }
+            <li class="nav-item">
+                <a class="nav-link text-muted p-1" href="@Url.RouteUrl("AgroProductRequestAll")">
+                    <i class="fas fa-praying-hands d-block text-center" style="font-size: 22px;"></i>
+                    <span class="d-block text-center mt-1" style="font-size: 12px;">
+                        Product Request
+                    </span>
+                </a>
+            </li>
+        </ul>
+    </div>
+</nav>
+@* End of Mobile Bottom Nav *@
+
+<style>
+    .mobile-offcanvas-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(105, 164, 31, .45);
+        height: 100%;
+        z-index: 9999;
+    }
+
+        .mobile-offcanvas-overlay .offcanvas-content {
+            background: rgba(105, 164, 31, 1);
+            width: 320px;
+            height: 100%;
+        }
+
+            .mobile-offcanvas-overlay .offcanvas-content li.divider {
+                height: 1px;
+                background: rgba(255, 255, 255, .1);
+                margin-top: 5px;
+                margin-bottom: 5px;
+            }
+</style>
+
+@* Mobile off-canvas *@
+<div class="mobile-offcanvas-overlay" style="display: none;">
+    <div class="offcanvas-content shadow">
+
+        <div class="d-flex flex-row-reverse">
+            <div class="p-2 bd-highlight">
+                <button class="btn bg-light-green rounded-pill shadow text-white pt-2 pl-3 pr-3 btn-close-offcanvas">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <ul class="nav flex-column justify-content-center h-100">
+            <li class="nav-item">
+                <a class="nav-link text-white" href="/vendor-login">Start Selling</a>
+            </li>
+            <li class="divider"></li>
+            @if (isLoggedIn)
+            {
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#">My Account</a>
+                </li>
+                @if (isVendor)
+                {
+                    <li class="nav-item">
+                        <a class="nav-link text-white" href="#">My Dashboard</a>
+                    </li>
+                }
+                <li class="divider"></li>
+            }
+            <li class="nav-item">
+                <a class="nav-link text-white" href="@Url.RouteUrl("Promotions")">Promo</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white" href="#">Track My Order</a>
+            </li>
+            <li class="divider"></li>
+            <li class="nav-item">
+                <a class="nav-link text-white" href="#">Customer Care</a>
+            </li>
+            @if (isLoggedIn)
+            {
+                <li class="divider mt-4"></li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="@Url.RouteUrl("Logout")">Logout</a>
+                </li>
+            }
+        </ul>
+    </div>
+</div>
+
+<script asp-location="Footer">
+    $(document).ready(function () {
+
+        $('.mobile-offcanvas-toggler').click(function () {
+            $('.mobile-offcanvas-overlay').show('slide');
+        });
+
+        $(document).on('click', '.mobile-offcanvas-overlay', function (e) {
+            if ($(e.target).find('.offcanvas-content').length) {
+                $('.mobile-offcanvas-overlay').hide('slow');
+            }
+        });
+
+        $('.btn-close-offcanvas').click(function () {
+            $('.mobile-offcanvas-overlay').hide('slow');
+        });
+    });
+</script>

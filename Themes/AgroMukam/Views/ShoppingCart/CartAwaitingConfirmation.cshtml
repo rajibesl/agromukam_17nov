@@ -1,0 +1,203 @@
+﻿@{
+    Layout = "_ColumnsOne";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.ShoppingCart").Text);
+    //page class
+    Html.AppendPageCssClassParts("html-shopping-cart-page");
+}
+
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+@functions{
+    public string GetAntiXsrfRequestToken()
+    {
+        return Xsrf.GetAndStoreTokens(Context).RequestToken;
+    }
+}
+
+<div class="page shopping-cart-page scp-pre">
+    <div class="d-flex flex-column justify-content-center" style="height: 300px;">
+        <img src="/Themes/AgroMukam/Content/images/loading.gif" class="d-block mx-auto my-3" />
+        <span class="text-muted-x text-center"> Loading shopping cart... </span>
+    </div>
+</div>
+
+<script asp-location="Footer">
+    $(document).ready(function () {
+
+        const cartUrl = '/ShoppingCart/CartIncludingPendingItems';
+
+        // Get/Refresh ShoppingCart View
+        function refreshShoppingCartView(url) {
+            showLoadingAnimation();
+
+            $.get(url, function (data) {
+                if (data) {
+                    console.log('success');
+                    $('.shopping-cart-page.scp-pre').html(data);
+                } else {
+                    console.log('failed to get sc items', data);
+                }
+                hideLoadingAnimation();
+            });
+        }
+
+        // On First Page load, Refresh Shopping Cart View
+        refreshShoppingCartView(cartUrl);
+
+
+        // Update Item Qty
+        function updateShoppingCartItemQty(itemId, qty, moveToCart) {
+            console.log('update cart', itemId, qty, moveToCart);
+            var url = `/ShoppingCart/UpdateShoppingCartItem?itemId=${itemId}&newQty=${qty}&moveToCart=${moveToCart}`;
+            refreshShoppingCartView(url);
+        }
+
+        // Put or Move item from ShoppingCart
+        $(document).on('click', '.cart-item-cb', function () {
+            var idAttr = $(this).attr('id');
+            var itemId = parseInt(idAttr.replace('select-', ''));
+            var qty = $('#itemquantity' + itemId).val();
+            var moveToCart = $(this).is(':checked');
+            updateShoppingCartItemQty(itemId, qty, moveToCart);
+        });
+
+        $(document).on('click', '.qty-increase', function () {
+            var inp = $(this).prev();
+            var curr = inp.val();
+            curr = parseInt(curr) + 1;
+            inp.val(curr);
+            var itemName = inp.attr('name');
+            var itemId = parseInt(itemName.replace('itemquantity', ''));
+            var moveToCart = $('#select-' + itemId).is(':checked');
+
+            updateShoppingCartItemQty(itemId, curr, moveToCart);
+
+            if (curr > 1) {
+                $(this).prev().prev()
+                    .find('i').removeClass('is-disabled');
+            }
+        });
+
+        $(document).on('click', '.qty-decrease', function () {
+            var inp = $(this).next();
+            var curr = inp.val();
+            curr = parseInt(curr) - 1;
+
+            console.log('curr', curr);
+
+            if (curr < 1) {
+                return false;
+            }
+
+            inp.val(curr);
+            var itemName = inp.attr('name');
+            var itemId = parseInt(itemName.replace('itemquantity', ''));
+            var moveToCart = $('#select-' + itemId).is(':checked');
+
+            updateShoppingCartItemQty(itemId, curr, moveToCart);
+
+            if (curr == 1) {
+                $(this)
+                    .find('button').addClass('is-disabled');
+            }
+
+        });
+
+        // Select all items in cart
+        $(document).on('click', '.cart-item-select-all', function () {
+            if ($(this).is(':checked')) {
+                $('.cart-item-cb').prop('checked', true);
+            } else {
+                $('.cart-item-cb').prop('checked', false);
+            }
+
+            // done selecting, refresh cart
+            $('.cart-item-cb').each(function () {
+                var idAttr = $(this).attr('id');
+                var itemId = parseInt(idAttr.replace('select-', ''));
+                var qty = $('#itemquantity' + itemId).val();
+                var moveToCart = $(this).is(':checked');
+                updateShoppingCartItemQty(itemId, qty, moveToCart);
+            });
+
+        });
+
+        // Remove item(s) from cart
+        function removeItemsFromCart(itemIds) {
+
+            console.log('remove these', itemIds);
+
+            const options = {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    "RequestVerificationToken": '@GetAntiXsrfRequestToken()'
+                },
+                body: JSON.stringify(itemIds)
+            };
+            fetch('/ShoppingCart/RemoveItemsFromShoppingCart', options)
+                .then(_ => refreshShoppingCartView(cartUrl))
+                .catch(e => console.log(`Error removing data`, e));
+        }
+
+        // remove individual item
+        $(document).on('click', '.item-action i', function () {
+            console.log('trash', $(this).data('item-id'));
+            var arr = [parseInt($(this).data('item-id'))];
+            removeItemsFromCart(arr);
+        });
+        // remove selected items
+        $(document).on('click', '.delete-selected-items', function () {
+            if ($('.cart-item-cb:checked').length > 0) {
+                console.log('delete selected items');
+                var arr = [];
+                $('.cart-item-cb:checked').each(function () {
+                    var itemId = $(this).attr('id').replace('select-', '');
+                    arr.push(parseInt(itemId));
+                });
+                removeItemsFromCart(arr);
+            } else {
+                console.log('no item selected');
+            }
+        });
+        // remove all items (empty cart)
+        $(document).on('click', '.empty-cart', function () {
+            console.log('empty cart');
+            var arr = [];
+            $('.cart-item-cb').each(function () {
+                var itemId = $(this).attr('id').replace('select-', '');
+                arr.push(parseInt(itemId));
+            });
+            removeItemsFromCart(arr);
+        });
+
+        // Browse items button action (when cart is empty)
+        $(document).on('click', '.browse-items', function () {
+            window.location = '/search';
+        });
+
+        // Refresh Cart (on ajax error)
+        $(document).on('click', '.refresh-cart', function () {
+            refreshShoppingCartView(cartUrl);
+        });
+
+        function showLoadingAnimation() {
+            $('.page-loader')
+                .css({
+                    'background': 'rgba(255, 255, 255, .5)',
+                    'display': 'block'
+                });
+        }
+
+        function hideLoadingAnimation() {
+            $('.page-loader')
+                .css({
+                    'background': '#fff',
+                    'display': 'none'
+                });
+        }
+
+
+    });
+</script>

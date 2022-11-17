@@ -1,0 +1,41 @@
+﻿@model IList<CustomerWishRequestListModel>
+
+<style>
+    .wishlist-wrapper hr {
+        border: none;
+        height: 1px;
+        background: #eee;
+        margin: 8px auto;
+    }
+    .wishlist-wrapper h3 {
+        margin-top: 8px;
+    }
+    .wishlist-wrapper .card {
+        border-left: 3px solid transparent !important;
+    }
+    .wishlist-wrapper .card.active {
+        border-left-color: #a6cf27 !important;
+    }
+
+</style>
+
+<div class="wishlist-wrapper">
+    @foreach(var item in Model )
+    {
+        <div class="card border-0 rounded-0 cursor-pointer shadow-sm mb-2" data-id="@item.Id">
+            <div class="card-body p-2">
+                @*<span class="text-muted"><small> <i class="far fa-calendar-alt"></i> Created on: @item.CreatedOnUtc.ToString("dd/mm/yyyy") </small></span>*@
+                <span class="text-muted"><small> <i class="far fa-calendar-alt"></i> Created on: @item.CreatedOnUtc.ToString("dd MMMM yyyy hh:mm tt") </small></span>
+                <h3> @item.Title </h3>
+                <hr />
+                <span class="text-muted wishlist-category-name font-weight-normal"
+                     style="font-size: 14px;"> 
+                    <i class="fas fa-th-list"></i>
+                    Posted in: <span class="text-greenish">
+                        @item.CategoryName
+                    </span>
+                </span>
+            </div>
+        </div>
+    }
+</div>

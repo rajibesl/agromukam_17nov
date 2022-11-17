@@ -1,0 +1,43 @@
+﻿@model ShoppingCartModel.OrderReviewDataModel
+@if (Model.Display)
+{
+<div class="agro-order-review-data">
+
+    <div class="card border-0 rounded-0 shadow-sm mb-2">
+        <div class="card-header">
+            @T("Order.ShippingAddress")
+        </div>
+        <div class="card-body">
+            <h6> @Model.ShippingAddress.FirstName @Model.ShippingAddress.LastName </h6>
+
+            <p>
+                @Model.ShippingAddress.Address1,
+                @Model.ShippingAddress.City
+            </p>
+
+            <p class="text-muted">
+                @Model.ShippingAddress.PhoneNumber
+            </p>
+        </div>
+    </div>
+
+    <div class="card border-0 rounded-0 shadow-sm mb-2">
+        <div class="card-header">
+            @T("Order.Payment")
+        </div>
+        <div class="card-body">
+            @Model.PaymentMethod
+        </div>
+    </div>
+
+    <div class="card border-0 rounded-0 shadow-sm mb-2">
+        <div class="card-header">
+            @T("Order.Shipping")
+        </div>
+        <div class="card-body">
+            AgroMukam Standard
+        </div>
+    </div>
+
+</div>
+}

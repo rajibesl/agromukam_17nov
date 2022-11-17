@@ -1,0 +1,1057 @@
+﻿@model ApplyVendorModel
+@using Nop.Services.Customers
+@using Nop.Services.Vendors
+@using Nop.Core.Domain.Catalog
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+@functions{
+    public string GetAntiXsrfRequestToken()
+    {
+        return Xsrf.GetAndStoreTokens(Context).RequestToken;
+    }
+}
+@{
+    Layout = "_ColumnsOne";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.Register").Text);
+    //page class
+    Html.AppendPageCssClassParts("html-registration-page");
+}
+<link rel="stylesheet" href="/Themes/Venture/Content/css/slide-unlock.css">
+<div class="page registration-page">
+    <div class="page-title">
+        <h1>@T("Account.Register")</h1>
+    </div>
+    <div class="page-body">
+        <form id="signupFormAdv" asp-route="VendorRegistration" asp-route-returnurl="@Context.Request.Query["ReturnUrl"]" method="post">
+            <div asp-validation-summary="ModelOnly" class="message-error"></div>
+            <div>
+
+                @* Personal Details *@
+                <h3 style="display: none;">Personal Details</h3>
+                <section class="fieldset personal-details">
+                    <div class="title">
+                        <strong>Tell us about yourself</strong>
+                    </div>
+                    <div class="form-fields">
+
+                        @* Account Type *@
+                        <div class="form-group common-attributes row">
+                            <label for="AccountType" class="col-sm-2 col-form-label">Account Type</label>
+                            <div class="col-sm-10">
+                                <div class="input-group inputs act-type">
+                                    <ul class="option-list">
+
+                                        @{
+                                            var actType = Model.VendorAttributes.Where(x => x.FormStepId == 0 && x.FormGroupName == "common").FirstOrDefault();
+                                            if (actType != null)
+                                            {
+                                                @foreach (var attributeValue in actType.Values)
+                                                {
+                                                    var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{actType.Id}";
+                                                    <li>
+                                                        <input id="@(controlId)_@(attributeValue.Id)" type="radio" name="@(controlId)" value="@attributeValue.Id" checked="@attributeValue.IsPreSelected" />
+                                                        <label for="@(controlId)_@(attributeValue.Id)">@attributeValue.Name</label>
+                                                    </li>
+                                                }
+                                            }
+                                        }
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        @*  *@
+
+                        @* Mobile Number *@
+                        <div class="inputs">
+                            <label for="Phone" asp-postfix=":">Mobile Number</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend" style="max-width: 90px;">
+                                    <select id="phoneAreaCode" name="areaCode"></select>
+                                </div>
+                                <input asp-for="RegisterModel.Phone" class="form-control" />
+                                <div class="w-100"></div>
+                                <span></span>
+                            </div>
+
+                        </div>
+                        <div class="inputs slide-to-verify">
+                            <label for="Phone">Verify</label>
+                            <div id="slider">
+                                <div id="slider_bg"></div>
+                                <span id="label">>></span>
+                                <span id="labelTip" data-text="Slide To Send Verification Code">Slide To Send Verification Code</span>
+                            </div>
+                            <label class="text-dangerval-msg mt-1" style="display: none;">Please verify your phone number</label>
+                        </div>
+                        @* Mobile Verification *@
+                        <div class="input-group mb-3" id="PhoneVerificationCode" style="display: none;">
+                            <input type="text" class="form-control" placeholder="Verification Code">
+                            <div class="input-group-append">
+                                <button class="btn btn-success verify-otp" type="button">Click to Verify</button>
+                            </div>
+                        </div>
+                        <h3 class="invalid-code-info text-danger text-center" style="text-transform: initial; display: none;">Invalid Code!<span></span></h3>
+                        <h4 class="resend-info text-info text-center" style="text-transform: initial; display: none;">You can request to resend code in <span></span></h4>
+                        <h3 class="must-verify-phone text-danger text-center" style="text-transform: initial; display: none;">You must verify your phone number <span></span></h3>
+                        <input type="hidden" id="UserNameHelper" asp-for="RegisterModel.Username" value="" />
+
+                        @* First Name *@
+                        <div class="inputs">
+                            <label for="FirstName" asp-postfix=":">First Name</label>
+                            <input asp-for="RegisterModel.FirstName" />
+                            <nop-required />
+                        </div>
+                        @* Last Name *@
+                        <div class="inputs">
+                            <label for="LastName" asp-postfix=":">Last Name</label>
+                            <input asp-for="RegisterModel.LastName" />
+                            <nop-required />
+                        </div>
+                        @* Email *@
+                        <div class="inputs">
+                            <label for="Email" asp-postfix=":">Login Email</label>
+                            <input asp-for="RegisterModel.Email" />
+                            <nop-required />
+                        </div>
+                        @* Password *@
+                        <div class="inputs">
+                            <label asp-for="RegisterModel.Password" asp-postfix=":"></label>
+                            <input asp-for="RegisterModel.Password" />
+                            <nop-required />
+                        </div>
+                        @* Confirm Password *@
+                        <div class="inputs">
+                            <label asp-for="RegisterModel.ConfirmPassword" asp-postfix=":"></label>
+                            <input asp-for="RegisterModel.ConfirmPassword" />
+                            <nop-required />
+                        </div>
+
+                        @* Business Info *@
+                        @* Company Name *@
+                        <div class="inputs vendor-attributes">
+                            <label for="Name" asp-postfix=":">Company Name</label>
+                            <input asp-for="Name" />
+                            <nop-required />
+                        </div>
+                        @* Business Email *@
+                        <div class="inputs vendor-attributes">
+                            <label for="Email" asp-postfix=":">Business Email</label>
+                            <input asp-for="Email" />
+                            <nop-required />
+                        </div>
+                        <div class="inputs vendor-attribute">
+                            <input type="checkbox" id="BusinessEmailSameAsPersonal" name="BusinessEmailSameAsPersonal" value="true">
+                            <label for="BusinessEmailSameAsPersonal">Same as Personal Email</label>
+                        </div>
+                    </div>
+                    <div class="form-fields accept-consent-wrap">
+                        <div class="inputs accept-consent">
+                            <input id="accept-consent" type="checkbox" name="accept-consent" />
+                            <label for="accept-consent">@T("Account.Fields.AcceptPrivacyPolicy")</label>
+                            @if (Model.RegisterModel.AcceptPrivacyPolicyPopup)
+                            {
+                                <span class="read" id="read-privacyinfo">@T("Account.Fields.AcceptPrivacyPolicy.Read")</span>
+                                <script asp-location="Footer">
+                                        $(document).ready(function() {
+                                            $('#read-privacyinfo').on('click',
+                                                function(e) {
+                                                    displayPopupContentFromUrl(
+                                                        '@Url.RouteUrl("TopicPopup", new {SystemName = "privacyinfo"})',
+                                                        '@T("Account.Fields.AcceptPrivacyPolicy")');
+                                                });
+                                        });
+                                </script>
+                            }
+                            else
+                            {
+                                <a class="read" id="read-privacyinfo" href="@Url.RouteUrl("Topic", new {SeName = Html.GetTopicSeNameAsync("privacyinfo") })">@T("Account.Fields.AcceptPrivacyPolicy.Read")</a>
+                            }
+                        </div>
+                    </div>
+                </section>
+
+                @* AddressBook *@
+                <h3 style="display: none;">AddressBook</h3>
+                <section class="fieldset address-book">
+                    <div class="business-address-book">
+                        <div class="title">
+                            <strong>Business Address</strong>
+                        </div>
+                        <div class="form-fields business-address">
+                            @* Business Address *@
+                            <input type="hidden" value="161" name="RegisterModel.CountryId" id="registerModel_CountryId" />
+
+                            <div class="inputs">
+                                <label asp-for="RegisterModel.RegionId" asp-postfix=":"></label>
+                                <select asp-for="RegisterModel.RegionId"></select>
+                                <nop-required />
+                            </div>
+                            <div class="inputs">
+                                <label asp-for="RegisterModel.CityId" asp-postfix=":"></label>
+                                <select asp-for="RegisterModel.CityId"></select>
+                                <nop-required />
+                                <span class="field-validation-error"
+                                      data-valmsg-for="RegisterModel.CityId"
+                                      data-valmsg-replace="true"></span>
+                            </div>
+                            <div class="inputs">
+                                <label asp-for="RegisterModel.AreaId" asp-postfix=":"></label>
+                                <select asp-for="RegisterModel.AreaId"></select>
+                                <nop-required />
+                            </div>
+                            <div class="inputs">
+                                <label asp-for="RegisterModel.StreetAddress" asp-postfix=":"></label>
+                                <input asp-for="RegisterModel.StreetAddress" />
+                                <nop-required />
+                            </div>
+                        </div>
+                        <div class="separator"></div>
+                        <div class="title">
+                            <strong>Warehouse Address</strong>
+                        </div>
+                        <div class="form-fields warehouse-address">
+
+                            <div class="inputs">
+                                <ul class="option-list">
+                                    <li>
+                                        <input id="waAddressSameAsBusinessAddress" type="checkbox" name="waAddressSameAsBusinessAddress" value="waEqBusiness">
+                                        <label for="waAddressSameAsBusinessAddress">Same as Business Address</label>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            @* Warehouse Address *@
+                            <input type="hidden" value="161" name="CountryId" id="applyVendorModel_CountryId" />
+
+                            <div class="inputs">
+                                <label asp-for="RegionId" asp-postfix=":"></label>
+                                <select asp-for="RegionId"></select>
+                                <nop-required />
+                            </div>
+                            <div class="inputs">
+                                <label asp-for="CityId" asp-postfix=":"></label>
+                                <select asp-for="CityId"></select>
+                                <nop-required />
+                            </div>
+                            <div class="inputs">
+                                <label asp-for="AreaId" asp-postfix=":"></label>
+                                <select asp-for="AreaId"></select>
+                                <nop-required />
+                            </div>
+                            <div class="inputs">
+                                <label asp-for="StreetAddress" asp-postfix=":"></label>
+                                <input asp-for="StreetAddress" />
+                                <nop-required />
+                            </div>
+
+                            <div class="separator"></div>
+                            @* Return Address *@
+                            @{
+                                var returnAddress = Model.VendorAttributes
+                                            .FirstOrDefault(x => x.FormStepId == 2 && x.FormGroupName == "common");
+                                if (returnAddress != null)
+                                {
+                                    var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{returnAddress.Id}";
+                                    <div class="inputs return-address">
+                                        <label>Return Address:</label>
+                                        <ul class="option-list">
+                                            @foreach (var attributeValue in returnAddress.Values)
+                                            {
+                                                var textPrompt = attributeValue.Name;
+                                                <li>
+                                                    <input id="@(controlId)_@(attributeValue.Id)" type="radio" name="@(controlId)" value="@attributeValue.Id" checked="@attributeValue.IsPreSelected" />
+                                                    <label for="@(controlId)_@(attributeValue.Id)">@textPrompt</label>
+                                                </li>
+                                            }
+                                        </ul>
+                                        <span class="field-validation-error"
+                                              data-valmsg-for="@(controlId)"
+                                              data-valmsg-replace="true"></span>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </section>
+
+
+                @* Profile Verification *@
+                <h3 style="display: none;">Profile Verification</h3>
+                <section class="fieldset verification">
+                    @* IF id type = personal *@
+                    <div class="form-fields profile-verification">
+                        <div class="title">
+                            <strong>Profile Verification</strong>
+                        </div>
+
+                        @{
+                            var profileVerificationAttrs = Model.VendorAttributes
+                                .Where(x => x.FormStepId == 3 && x.FormGroupName == "personal" && x.DisplayOrder == 0)
+                                .ToList();
+
+                            if (profileVerificationAttrs.Count > 0)
+                            {
+                                foreach (var attr in profileVerificationAttrs)
+                                {
+                                    @await Html.PartialAsync("_CustomVendorAttribute", attr,
+                                          new ViewDataDictionary(this.Vi‌​ewData) {
+                                            {
+                                              "className", "common-attributes"
+                                            }
+                                          })
+                                }
+                            }
+                        }
+                        @* Upload File *@
+                        <div class="inputs common-attributes">
+                            <label for="personalFileUpload" asp-postfix=":">Upload ID Copy</label>
+                            <input type="file" name="personalFileUpload" />
+                            <nop-required />
+                        </div>
+                        @* Business Type *@
+                        @{
+                            var businessType = Model.VendorAttributes
+                                        .FirstOrDefault(x => x.FormStepId == 3 && x.FormGroupName == "personal" && x.DisplayOrder == 1);
+                            if (businessType != null)
+                            {
+                                @await Html.PartialAsync("_CustomVendorAttribute", businessType,
+                                          new ViewDataDictionary(this.Vi‌​ewData) {
+                                            {
+                                              "className", "common-attributes"
+                                            }
+                                          })
+                            }
+                        }
+                    </div>
+
+                    @* IF id type = business *@
+                    <div class="form-fields business-verification" style="display: none;">
+                        <div class="title">
+                            <strong>Business Verification</strong>
+                        </div>
+                        @{
+                            var businessVerificationAttrs = Model.VendorAttributes
+                                .Where(x => x.FormStepId == 3 && x.FormGroupName == "business" && x.DisplayOrder == 0)
+                                .ToList();
+
+                            if (businessVerificationAttrs.Count > 0)
+                            {
+                                foreach (var attr in businessVerificationAttrs)
+                                {
+                                    @await Html.PartialAsync("_CustomVendorAttribute", attr,
+                                          new ViewDataDictionary(this.Vi‌​ewData) {
+                                            {
+                                              "className", "vendor-attributes"
+                                            }
+                                          })
+                                }
+                            }
+                        }
+                        @* Upload File *@
+                        <div class="inputs vendor-attributes">
+                            <label for="businessFileUpload" asp-postfix=":">Upload Business Doc</label>
+                            <input type="file" name="businessFileUpload" />
+                            <nop-required />
+                        </div>
+                        @* Business Type *@
+                        @{
+                            var vBusinessType = Model.VendorAttributes
+                                        .FirstOrDefault(x => x.FormStepId == 3 && x.FormGroupName == "business" && x.DisplayOrder == 1);
+                            if (vBusinessType != null)
+                            {
+                                @await Html.PartialAsync("_CustomVendorAttribute", vBusinessType,
+                                          new ViewDataDictionary(this.Vi‌​ewData) {
+                                            {
+                                              "className", "vendor-attributes"
+                                            }
+                                          })
+                            }
+                        }
+                    </div>
+                </section>
+
+                @* Bank Information *@
+                <h3 style="display: none;">Bank Information</h3>
+                <section class="fieldset payment-details">
+                    <div class="title">
+                        <strong>Payment Details</strong>
+                    </div>
+                    <div class="form-fields personal-payment-info">
+
+                        @{
+                            var personalPaymentAttrs = Model.VendorAttributes
+                                .Where(x => x.FormStepId == 4 && x.FormGroupName == "personal" && x.DisplayOrder == 0)
+                                .ToList();
+
+                            if (personalPaymentAttrs.Count > 0)
+                            {
+                                foreach (var attr in personalPaymentAttrs)
+                                {
+                                    if (attr.AttributeControlType == AttributeControlType.DropdownList)
+                                    {
+                                        <div class="payment-act-type">
+                                            @await Html.PartialAsync("_CustomVendorAttribute", attr,
+                                          new ViewDataDictionary(this.Vi‌​ewData) {
+                                            {
+                                              "className", "common-attributes"
+                                            }
+                                          })
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        @await Html.PartialAsync("_CustomVendorAttribute", attr,
+                                          new ViewDataDictionary(this.Vi‌​ewData) {
+                                            {
+                                              "className", "common-attributes"
+                                            }
+                                          })
+                                    }
+                                }
+                            }
+                        }
+
+
+                        @* bank, conditional *@
+                        <div class="personal-bank-det" style="display: none;">
+
+                            @{
+                                var customerBankDetailsAttrs = Model.VendorAttributes
+                                    .Where(x => x.FormStepId == 4 && x.FormGroupName == "personal" && x.DisplayOrder == 1)
+                                    .ToList();
+
+                                if (customerBankDetailsAttrs.Count > 0)
+                                {
+                                    foreach (var attr in customerBankDetailsAttrs)
+                                    {
+                                        @await Html.PartialAsync("_CustomVendorAttribute", attr,
+                                          new ViewDataDictionary(this.Vi‌​ewData) {
+                                            {
+                                              "className", "common-attributes"
+                                            }
+                                          })
+                                    }
+                                }
+                            }
+
+                            @* Upload File *@
+                            <div class="inputs common-attributes">
+                                <label for="chequeUpload" asp-postfix=":">Upload Cheque Copy</label>
+                                <input type="file" name="chequeUpload" />
+                                <nop-required />
+                            </div>
+                        </div>
+                        @* Seller TIN *@
+                        @{
+                            var sellerTINOfCustomer = Model.VendorAttributes
+                                        .FirstOrDefault(x => x.FormStepId == 4 && x.FormGroupName == "personal" && x.DisplayOrder == 2);
+                            if (sellerTINOfCustomer != null)
+                            {
+                                var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{sellerTINOfCustomer.Id}";
+                                <div class="inputs common-attributes">
+                                    <label> @sellerTINOfCustomer.Name </label>
+                                    <input name="@(controlId)" type="text" class="textbox" id="@(controlId)" value="@sellerTINOfCustomer.DefaultValue" />
+                                </div>
+                            }
+                        }
+                    </div>
+                    <div class="form-fields business-payment-info" style="display: none;">
+                        @* Business Payment Account Name *@
+                        @{
+                            var businessPaymentDetailsAttrs = Model.VendorAttributes
+                                .Where(x => x.FormStepId == 4 && x.FormGroupName == "business" && x.DisplayOrder == 0)
+                                .ToList();
+
+                            if (businessPaymentDetailsAttrs.Count > 0)
+                            {
+                                foreach (var attr in businessPaymentDetailsAttrs)
+                                {
+                                    @await Html.PartialAsync("_CustomVendorAttribute", attr,
+                                          new ViewDataDictionary(this.Vi‌​ewData) {
+                                            {
+                                              "className", "vendor-attributes"
+                                            }
+                                          })
+                                }
+                            }
+                        }
+                        @* Upload File *@
+                        <div class="inputs vendor-attributes">
+                            <label for="businessPaymentChequeUpload" asp-postfix=":">Upload Cheque Copy</label>
+                            <input type="file" name="businessPaymentChequeUpload" />
+                            <nop-required />
+                        </div>
+                        @* Seller TIN *@
+                        @{
+                            var sellerTINOfVendor = Model.VendorAttributes
+                                        .FirstOrDefault(x => x.FormStepId == 4 && x.FormGroupName == "business" && x.DisplayOrder == 2);
+                            if (sellerTINOfVendor != null)
+                            {
+                                var controlIdVendor = $"{NopVendorDefaults.VendorAttributePrefix}{sellerTINOfVendor.Id}";
+                                <div class="inputs vendor-attributes">
+                                    <label> @sellerTINOfVendor.Name </label>
+                                    <input name="@(controlIdVendor)" type="text" class="textbox" id="@(controlIdVendor)" value="@sellerTINOfVendor.DefaultValue" />
+                                </div>
+                            }
+                        }
+                    </div>
+                </section>
+
+
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    span.input-invalid-message {
+        padding-top: 7px !important;
+    }
+
+    .vendor-attribute,
+    .vendor-attributes {
+        display: none;
+    }
+
+    .separator {
+        display: block;
+        width: 70%;
+        border-bottom: 1px dashed #ccc;
+        margin: 30px auto;
+    }
+
+    .inputs.accept-consent span.input-invalid-message:before {
+        height: 0 !important;
+    }
+
+    .accept-consent-wrap {
+        border-top: 1px dashed #ccc;
+        padding: 15px 0 0;
+    }
+</style>
+
+
+<script src="/Themes/Venture/Content/scripts/jquery.slideunlock.js" asp-location="Footer"></script>
+<script asp-location="Footer">
+
+    // initialize form & steps
+    var form = $('#signupFormAdv');
+    var otpCountDownInterval;
+
+    form.validate({
+        errorPlacement: function errorPlacement(error, element) { element.next().after(error); },
+        errorClass: 'input-invalid-message',
+        errorElement: 'span',
+        rules: {
+            'RegisterModel.FirstName': { required: true },
+            'RegisterModel.LastName': { required: true },
+            'RegisterModel.Phone': {
+                required: true,
+                regex: '^[0-9]{9,11}$',
+                remote: {
+                    url: `@Url.RouteUrl("CheckPhoneNumberAvailability")`,
+                    type: "get",
+                    headers: {
+                        "RequestVerificationToken": '@GetAntiXsrfRequestToken()'
+                    },
+                    data: {
+                        Phone: function() {
+                            return $('#RegisterModel_Phone').val();
+                        },
+                        areaCode: function () {
+                            return $('#phoneAreaCode').val();
+                        }
+
+                    }
+                }
+            },
+            PhoneVerificationCode: { required: true },
+            'RegisterModel.Email': {
+                required: true,
+                email: true,
+                remote: {
+                    url: `@Url.RouteUrl("CheckEmailAvailability")`,
+                    type: "post",
+                    headers: {
+                        "RequestVerificationToken": '@GetAntiXsrfRequestToken()'
+                    },
+                    data: {
+                      email: function() {
+                            return $('#RegisterModel_Email').val();
+                      }
+                    }
+                }
+            },
+            'RegisterModel.Password': { required: true },
+            'RegisterModel.ConfirmPassword': {
+                required: true,
+                equalTo: '#registerModel_Password'
+            },
+            'accept-consent': { required: true },
+            'RegisterModel.RegionId': { required: true },
+            'RegisterModel.CityId': { required: true },
+            'RegisterModel.AreaId': { required: true },
+            'RegisterModel.StreetAddress': { required: true },
+            'RegionId': { required: true },
+            'CityId': { required: true },
+            'AreaId': { required: true },
+            'StreetAddress': { required: true }
+        },
+        messages: {
+            'RegisterModel.FirstName': { required: 'First Name is required' },
+            'RegisterModel.LastName': { required: 'Last Name is required' },
+            'RegisterModel.Phone': {
+                required: 'Phone is required',
+                regex: 'Please type in a valid phone no.',
+                remote: 'This phone number is already registered'
+            },
+            PhoneVerificationCode: { required: 'Verification Code is required' },
+            'RegisterModel.Email': {
+                required: 'Email Address is required',
+                remote: 'This Email Address is already Registered'
+            },
+            'RegisterModel.Password': { required: 'Password is required' },
+            'RegisterModel.ConfirmPassword': { required: 'ConfirmPassword is required' },
+            'accept-consent': { required: 'Must Accept Privacy Policy' },
+            'RegisterModel.RegionId': { required: 'Business Region is required' },
+            'RegisterModel.CityId': { required: 'Business City is required' },
+            'RegisterModel.AreaId': { required: 'Business Area is required' },
+            'RegisterModel.StreetAddress': { required: 'Business Address is required' },
+            'RegionId': { required: 'Warehouse Region is required' },
+            'CityId': { required: 'Warehouse City is required' },
+            'AreaId': { required: 'Warehouse Area is required' },
+            'StreetAddress': { required: 'Warehouse Address is required' }
+        }
+    });
+
+    form.children('div').steps({
+        headerTag: 'h3',
+        bodyTag: 'section',
+        transitionEffect: 'fade',
+        onStepChanging: function (event, currentIndex, newIndex) {
+            // Allways allow previous action even if the current form is not valid!
+            if (currentIndex > newIndex) {
+                return true;
+            }
+
+            if (currentIndex == 0 && $('#UserNameHelper').val().trim().length == 0) {
+                $('.must-verify-phone').show('slow', function () {
+                    $("html, body").animate({ scrollTop: 0 }, 500);
+                    setTimeout(function () {
+                        $('.must-verify-phone').hide();
+                    }, 5000);
+                });
+                return false;
+            }
+
+            //if (currentIndex == 1 && !validateAddressInputs()) {
+            //    return false;
+            //}
+
+            if (currentIndex == 2) {
+                if ($('#ActTypeHelper').val() == 1) {
+                    if ($('.profile-id-type select').val() == 0) {
+                        alert('Please select ID Type');
+                        return false;
+                    }
+                }
+            }
+            if (currentIndex == 3) {
+                if ($('#ActTypeHelper').val() == 1) {
+                    if ($('.payment-act-type select').val() == 0) {
+                        alert('Please select Account Type');
+                        return false;
+                    }
+                }
+            }
+
+            form.validate().settings.ignore = ':disabled,:hidden';
+            return form.valid();
+        },
+        onStepChanged: function (event, currentIndex, priorIndex) {
+            $("html, body").animate({ scrollTop: 0 }, 500);
+            updateStepChangerBtns();
+        },
+        onFinishing: function (event, currentIndex) {
+            form.validate().settings.ignore = ':disabled';
+            return form.valid();
+        },
+        onFinished: function (event, currentIndex) {
+            $('#registerModel_Phone').removeAttr('disabled');
+            $('#applyVendorModel_RegionId, #applyVendorModel_CityId, #applyVendorModel_AreaId, #applyVendorModel_StreetAddress')
+                .removeAttr('disabled');
+            form.submit();
+        }
+    });
+
+    // hide step titles
+    $('.steps', form).hide();
+
+    // next-previous-finish buttons
+    form
+        .find('.actions')
+        .addClass('buttons');
+
+    updateStepChangerBtns();
+    setVisibilityForConditionalInputs(false);
+    setVisibilityForConditionalPaymentInputs(false);
+
+    // signup account type change event
+    $('.act-type input').change(function () {
+        var val = $(this).next().text();
+        var isBusinessRegistration = val == 'Business';
+        var action = isBusinessRegistration ? 'show' : 'hide';
+        var text = isBusinessRegistration ? 'Register as Vendor' : 'Register';
+        $('#ActTypeHelper').val(isBusinessRegistration ? 2 : 1);
+        $('.vendor-attribute, .vendor-attributes')[action]('slow');
+        $('.page-title h1').text(text);
+        setVisibilityForConditionalInputs(isBusinessRegistration);
+    });
+
+    $('.payment-act-type select').change(function () {
+        setVisibilityForConditionalPaymentInputs(this);
+    });
+
+    $('#BusinessEmailSameAsPersonal').change(function () {
+        var isChecked = $(this).is(':checked');
+        var val = isChecked ? $('#registerModel_Email').val() : '';
+        $('#applyVendorModel_Email').val(val);
+        //$('#applyVendorModel_Email').attr('disabled', isChecked);
+    });
+
+    $('#registerModel_Email').change(function () {
+        if ($('#BusinessEmailSameAsPersonal').is(':checked')) {
+            $('#applyVendorModel_Email').val($(this).val());
+        }
+    });
+
+    // validate address
+    function validateAddressInputs() {
+
+        var errorCount = 0;
+
+        $('.business-address-book select, .business-address-book input:not([type="hidden"])')
+            .each(function () {
+
+                if ($(this).val() == null || $(this).val().length == 0) {
+                    errorCount++;
+                }
+
+            });
+
+        var returnAddress = $('.return-address input[type="radio"]:checked').val();
+        if (!returnAddress) {
+            errorCount++;
+        }
+
+        return errorCount == 0;
+    }
+
+    // control conditionaml payment inputs
+    function setVisibilityForConditionalPaymentInputs(elem) {
+        var val = elem.selectedIndex;
+        if (val == 4) {
+            $('.personal-bank-det').show('slow');
+            $('.personal-bank-det .common-attributes input').each(function() {
+                $(this).rules('add', { required: true });
+            });
+        } else {
+            $('.personal-bank-det').hide('slow');
+            $('.personal-bank-det .common-attributes input').each(function() {
+                $(this).rules('remove', 'required');
+            });
+        }
+    }
+
+    // control conditional inputs
+    function setVisibilityForConditionalInputs(businessRegistration) {
+        var customerAttributes = `div:not(.personal-bank-det) .common-attributes input`;
+        var vendorAttributes = `.vendor-attributes input`;
+
+        if (businessRegistration) {
+            $(vendorAttributes).each(function() {
+                $(this).rules('add', {
+                    required: true, messages: {
+                        required: "This field is required"
+                    } });
+            });
+            $(customerAttributes).each(function() {
+                $(this).rules('remove', 'required');
+            });
+
+            $('.business-verification, .business-payment-info').show();
+            $('.profile-verification, .personal-payment-info').hide();
+
+        } else {
+            $(customerAttributes).each(function() {
+                $(this).rules('add', {
+                    required: true, messages: {
+                        required: "This field is required"
+                    } });
+            });
+            $(vendorAttributes).each(function() {
+                $(this).rules('remove', 'required');
+            });
+
+            $('.business-verification, .business-payment-info').hide();
+            $('.profile-verification, .personal-payment-info').show();
+        }
+    }
+
+    function updateStepChangerBtns() {
+        form
+            .find('.actions')
+            .find('li')
+            .each(function () {
+                var visible = $(this).is(":visible");
+                if (visible) {
+                    $(this)
+                        .css({
+                            display: 'inline-block',
+                            margin: '0px 3px 0px 2px'
+                        })
+                        .find('a')
+                        .addClass('button-1 register-next-step-button');
+                }
+            });
+    }
+
+    function beginOtpResendCountDown() {
+        var deadline = new Date();
+        deadline.setMinutes(deadline.getMinutes() + 1);
+        otpCountDownInterval = setInterval(function () {
+            var now = new Date().getTime();
+            var t = deadline - now;
+            var minutes = Math.floor((t % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((t % (1000 * 60)) / 1000);
+            $('.resend-info').show().find('span').html(`${minutes}m ${seconds}s`);
+            if (t < 0) {
+                clearInterval(otpCountDownInterval);
+                $('#registerModel_Phone').removeAttr('disabled');
+                $('.slide-to-verify').show('slow');
+                $('.phone-verification-code').hide();
+                $('.resend-info').hide();
+                // reset phone verification slider
+                slider.reset();
+                slider.updateView();
+                slider.init();
+                $('#labelTip').text($('#labelTip').data('text')).css('color', '#787878');
+            }
+        }, 1000);
+    }
+
+    $('#registerModel_Phone').keyup(function (e) {
+        if (e.target.value.length > 0) {
+            $('.slide-to-verify').show('slow');
+        } else {
+            $('.slide-to-verify').hide();
+        }
+    });
+
+    // validate OTP
+    $('.verify-otp').on('click', function () {
+        var phoneNumber = $('#registerModel_Phone').val();
+        var code = $('#PhoneVerificationCode input').val();
+        var url = `/Customer/ValidateOtpCode?phoneNumber=880${phoneNumber}&otpCode=${code}`;
+        $.post({
+            url: url,
+            headers: {
+                "RequestVerificationToken": '@GetAntiXsrfRequestToken()'
+            },
+            success: function (data) {
+                if (data) {
+                    $('#UserNameHelper, #PhoneNumberHelper').val(`880${phoneNumber}`);
+                    $('.slide-to-verify, .resend-info').hide();
+                    //$('#PhoneVerificationCode').hide();
+                    $('#PhoneVerificationCode input, #PhoneVerificationCode button').attr('disabled', true);
+                    $('#PhoneVerificationCode button').text('Verified');
+                    $('label[for="Phone"]').html(`Phone Number <i class="fas fa-check-circle text-success"></i>`);
+                    clearInterval(otpCountDownInterval);
+                } else {
+                    $('.invalid-code-info').show('slow', function () {
+                        setTimeout(function () {
+                            $('.invalid-code-info').hide();
+                        }, 5000);
+                    });
+                }
+            },
+            error: function (err) {
+                console.log('error', err);
+            }
+        });
+    });
+
+    var slider = new SliderUnlock("#slider", {}, $('#registerModel_Phone'), function () {
+        var phoneNumber = $('#registerModel_Phone').val();
+        $('#registerModel_Phone').attr('disabled', true);
+        var url = `/Customer/SendOtpCode?phoneNumber=880${phoneNumber}`;
+        $.post({
+            url: url,
+            headers: {
+                "RequestVerificationToken": '@GetAntiXsrfRequestToken()'
+            },
+            success: function (data) {
+                if (data == 'OK') {
+                    $('.slide-to-verify').hide().find('.val-msg').hide();
+                    $('#PhoneVerificationCode').show('slow');
+                    beginOtpResendCountDown();
+                } else {
+                    $('.failed-to-send-otp').show('slow', function () {
+                        setTimeout(function () {
+                            $('.failed-to-send-otp').hide();
+                        });
+                    })
+                    slider.reset();
+                    slider.updateView();
+                    slider.init();
+                    $('#registerModel_Phone').removeAttr('disabled');
+                }
+            },
+            error: function (err) {
+                console.log('error', err);
+            }
+        });
+    });
+
+    slider.init();
+
+
+    $('#waAddressSameAsBusinessAddress').change(function () {
+
+        if ($(this).is(':checked')) {
+
+            $('#applyVendorModel_RegionId, #applyVendorModel_CityId, #applyVendorModel_AreaId, #applyVendorModel_StreetAddress')
+                .attr('disabled', true);
+
+            $('#applyVendorModel_CityId').html('');
+            $('#applyVendorModel_AreaId').html('');
+
+            $('#applyVendorModel_RegionId')
+                .val($('#registerModel_RegionId').val())
+                .trigger('change');
+
+            $('#applyVendorModel_StreetAddress').val($('#registerModel_StreetAddress').val());
+        } else {
+            $('#applyVendorModel_RegionId, #applyVendorModel_CityId, #applyVendorModel_AreaId, #applyVendorModel_StreetAddress')
+                .removeAttr('disabled');
+        }
+
+    });
+
+    $('.return-address input[type="radio"]').change(function () {
+        $('.return-address .field-validation-error').text('');
+    });
+
+    $('#registerModel_StreetAddress').keyup(function () {
+        if ($('#waAddressSameAsBusinessAddress').is(':checked')) {
+            var val = $(this).val();
+            $('#applyVendorModel_StreetAddress').val(val);
+            $('#applyVendorModel_StreetAddress').next().next().text('');
+        }
+        $('#registerModel_StreetAddress').next().next().text('');
+    });
+
+    $(document).ready(async function () {
+        const emptyOption = '<option value="0">--- &nbsp; Select &nbsp; ---</option>';
+
+        /*
+            Address
+        */
+        async function fetchAddress(url, selector) {
+            return fetch(url)
+                .then(resp => resp.json())
+                .catch(e => {
+                    console.log(`${selector} fetch error`, e);
+                });
+        }
+
+        function generateAddressOptions(selector, data, selectedVal) {
+            var el = $(selector);
+            el.html(emptyOption);
+
+            $.each(data,
+                function (id, option) {
+                    el.append($('<option></option>').val(option.Id)
+                        .html(option.Name));
+                });
+
+            el.val(selectedVal);
+            setTimeout(function () {
+                $(selector).trigger('change');
+            }, 300);
+        }
+
+        var selectedCountry = $('#registerModel_CountryId').val();
+        var url = `@(Url.RouteUrl("GetRegionsByCountryId"))?countryId=${selectedCountry}`;
+
+        var resp = await fetchAddress(url, '#registerModel_RegionId');
+        generateAddressOptions('#registerModel_RegionId', resp, `@Model.RegisterModel.RegionId`);
+        generateAddressOptions('#applyVendorModel_RegionId', resp, `@Model.RegionId`);
+
+        $('#registerModel_RegionId').change(async function () {
+            var val = $(this).val();
+            if (val > 0) {
+                $('#registerModel_CityId').html(emptyOption);
+                $('#registerModel_AreaId').html(emptyOption);
+                var url = `@(Url.RouteUrl("GetCitiesByRegionId"))?regionId=${val}`;
+                var resp = await fetchAddress(url, '#registerModel_CityId');
+                generateAddressOptions('#registerModel_CityId', resp, `@Model.RegisterModel.CityId`);
+            }
+        });
+
+        $('#registerModel_CityId').change(async function () {
+            var val = $(this).val();
+            if (val > 0) {
+                $('#registerModel_AreaId').html(emptyOption);
+                var url = `@(Url.RouteUrl("GetAreasByCityId"))?cityId=${val}`;
+                var resp = await fetchAddress(url, '#registerModel_AreaId');
+                generateAddressOptions('#registerModel_AreaId', resp, `@Model.RegisterModel.AreaId`);
+            }
+        });
+
+        $('#applyVendorModel_RegionId').change(async function () {
+            var val = $(this).val();
+            if (val > 0) {
+                $('#applyVendorModel_AreaId').html(emptyOption);
+                var url = `@(Url.RouteUrl("GetCitiesByRegionId"))?regionId=${val}`;
+                var resp = await fetchAddress(url, '#applyVendorModel_CityId');
+                if ($('#waAddressSameAsBusinessAddress').is(':checked')) {
+                    generateAddressOptions('#applyVendorModel_CityId', resp, $('#registerModel_CityId').val());
+                } else {
+                    generateAddressOptions('#applyVendorModel_CityId', resp, `@Model.CityId`);
+                }
+            }
+        });
+
+        $('#applyVendorModel_CityId').change(async function () {
+            var val = $(this).val();
+            if (val > 0) {
+                $('#applyVendorModel_AreaId').html(emptyOption);
+                var url = `@(Url.RouteUrl("GetAreasByCityId"))?cityId=${val}`;
+                var resp = await fetchAddress(url, '#applyVendorModel_AreaId');
+                if ($('#waAddressSameAsBusinessAddress').is(':checked')) {
+                    generateAddressOptions('#applyVendorModel_AreaId', resp, $('#registerModel_AreaId').val());
+                } else {
+                    generateAddressOptions('#applyVendorModel_AreaId', resp, `@Model.AreaId`);
+                }
+            }
+        });
+    });
+
+    // Phone Area Code
+    $.getJSON('/Themes/Venture/Content/area-data/all.json', function (resp) {
+
+        var areaCodes = '';
+        for (var item of resp) {
+            areaCodes += `<option value="${item.code}"> (${item.code}) &nbsp;&nbsp;&nbsp; ${item.name} </option>`;
+        }
+        $('#phoneAreaCode')
+            .html(areaCodes)
+            .val('880');
+        $('#Phone').removeAttr('disabled');
+
+    });
+
+
+</script>

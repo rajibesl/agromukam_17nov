@@ -1,0 +1,154 @@
+﻿@model CategoryModel
+@using Nop.Core.Domain.Common
+@using Nop.Core.Domain.Seo
+@inject Nop.Core.IWebHelper webHelper
+@inject SeoSettings seoSettings
+@inject CommonSettings commonSettings
+@inject Nop.Core.IWorkContext workContext
+@{
+    Layout = "_ColumnsOne";
+
+    //title
+    Html.AddTitleParts(!string.IsNullOrEmpty(Model.MetaTitle) ? Model.MetaTitle : Model.Name);
+    //meta
+    Html.AddMetaDescriptionParts(Model.MetaDescription);
+    Html.AddMetaKeywordParts(Model.MetaKeywords);
+    //page class
+    Html.AppendPageCssClassParts("html-category-page");
+
+    if (seoSettings.CanonicalUrlsEnabled)
+    {
+        var categoryUrl = Url.RouteUrl("Category", new { SeName = Model.SeName }, webHelper.GetCurrentRequestProtocol()).ToLowerInvariant();
+        Html.AddCanonicalUrlParts(categoryUrl, seoSettings.QueryStringInCanonicalUrlsEnabled);
+    }
+
+    var breadcrumbDelimiter = commonSettings.BreadcrumbDelimiter;
+
+    // ads are displayed on first & second level categories only
+    var showCategoryPageAds = Model.CategoryBreadcrumb.Count > 0 && Model.CategoryBreadcrumb.Count < 3;
+    var categoryLvl = Model.CategoryBreadcrumb.Count - 1;
+    var breadCrumbs = Model.CategoryBreadcrumb.Select(b => b.Name).ToList();
+    var categoryName = String.Join(" > ", breadCrumbs);
+    var languageKey = (await workContext.GetWorkingLanguageAsync()).UniqueSeoCode == "en" ? "" : "Bn";
+}
+
+<input type="hidden" value="@($"ProductCategories{languageKey}.lvl{categoryLvl}:'{categoryName}'")" id="defaultFacetFilters" />
+
+@* BreadCrumb *@
+@if (Model.DisplayCategoryBreadcrumb)
+{
+    <div class="breadcrumb p-0">
+        <ul itemscope itemtype="http://schema.org/BreadcrumbList" class="text-center">
+            <li>
+                <a href="@Url.RouteUrl("Homepage")" title="@T("Categories.Breadcrumb.Top")">@T("Categories.Breadcrumb.Top")</a>
+                <span class="delimiter">@breadcrumbDelimiter</span>
+            </li>
+            @{ int position = 1; }
+            @foreach (var cat in Model.CategoryBreadcrumb)
+            {
+                var isLastCategory = cat.Id == Model.Id;
+                <li itemprop="itemListElement" itemscope itemtype="http://schema.org/ListItem">
+                    @if (isLastCategory)
+                    {
+                        <strong class="current-item" itemprop="name">@cat.Name</strong>
+                        <span itemprop="item" itemscope itemtype="http://schema.org/Thing"
+                              id="@Url.RouteUrl("Category", new {SeName = cat.SeName})">
+                        </span>
+                    }
+                    else
+                    {
+                        <a href="@Url.RouteUrl("Category", new { SeName = cat.SeName })" title="@cat.Name" itemprop="item">
+                            <span itemprop="name">@cat.Name</span>
+                        </a>
+                        <span class="delimiter">@breadcrumbDelimiter</span>
+                    }
+                    <meta itemprop="position" content="@position" />
+                </li>
+                position++;
+            }
+        </ul>
+    </div>
+    @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.CategoryDetailsAfterBreadcrumb, additionalData = Model })
+}
+
+<div class="page category-page pt-2">
+
+    <div class="page-body container-fluid">
+
+        <div class="search-container">
+            <div class="left-panel as-sidebar">
+                <div class="ais-header" style="display: none;">
+                    @T("Plugin.Misc.AgroMisc.Algolia.Filters.RelatedCategories")
+                </div>
+                <div id="categories"></div>
+                @* attributes *@
+                <div class="ais-header mt-3" style="display: none;">
+                    @T("Plugin.Misc.AgroMisc.Algolia.Filters.Vendors")
+                </div>
+                <div id="vendors"></div>
+                <div class="ais-header mt-3" style="display: none;">
+                    @T("Plugin.Misc.AgroMisc.Algolia.Filters.Manufacturers")
+                </div>
+                <div id="manufacturers"></div>
+                @* spec attributes *@
+                <div class="ais-header mt-3" style="display: none;">
+                    @T("Plugin.Misc.AgroMisc.Algolia.Filters.CountryOfOrigin")
+                </div>
+                <div id="country-of-origin"></div>
+                <div class="ais-header mt-3" style="display: none;">
+                    @T("Plugin.Misc.AgroMisc.Algolia.Filters.Services")
+                </div>
+                <div id="services"></div>
+                <div class="ais-header mt-3" style="display: none;">
+                    @T("Plugin.Misc.AgroMisc.Algolia.Filters.Location")
+                </div>
+                <div id="waLocation"></div>
+                <div class="ais-header mt-3" style="display: none;">
+                    @T("Plugin.Misc.AgroMisc.Algolia.Filters.Price")
+                </div>
+                <div id="price"></div>
+                <div class="ais-header mt-3" style="display: none;">
+                    @T("Plugin.Misc.AgroMisc.Algolia.Filters.Ratings")
+                </div>
+                <div id="ratings"></div>
+            </div>
+
+            <div class="right-panel as-content">
+
+                @if (showCategoryPageAds)
+                {
+                    <div class="cat-ads-space mb-3">
+                        @await Component.InvokeAsync("Widget", new { widgetZone = "agroads_category_page_banner", additionalData = Model.Id })
+                        @await Component.InvokeAsync("Widget", new { widgetZone = "agroads_category_page_brand", additionalData = Model.Id })
+                    </div>
+                }
+
+                <div class="row">
+                    <div class="col-12 col-sm-6 d-flex align-items-center">
+                        <div id="stats"></div>
+                    </div>
+                    <div class="col-12 col-sm-6 d-flex justify-content-sm-end">
+                        <div id="sort-by" style="max-width: 235px;"></div>
+                    </div>
+                </div>
+                <div id="current-refinements" class="mb-2"></div>
+                <div id="hits"></div>
+                <div id="pagination"></div>
+            </div>
+        </div>
+
+        <div class="as-filter-toggler d-lg-none">
+            <div class="d-flex flex-column justify-content-center align-items-center">
+                <button class="btn btn-sm bg-light-green text-white rounded-pill shadow">
+                    <i class="fas fa-filter"></i>
+                    Filters
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script asp-location="Footer"
+        src="/Themes/AgroMukam/Content/js/as-global.js?v=@DateTime.UtcNow.Millisecond"></script>

@@ -1,0 +1,35 @@
+﻿@model IList<VendorAttributeModel>
+@using Nop.Services.Vendors
+
+@{
+    var addressRequired = this.ViewData["addressRequired"];
+    var isRequired = Convert.ToBoolean(addressRequired);
+}
+
+@foreach (var attribute in Model)
+{
+    var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{attribute.Id}";
+    var textPrompt = attribute.Name;
+
+    var jid = String.Concat(textPrompt.Where(c => !Char.IsWhiteSpace(c)));
+
+    <div class="inputs custom-attributes">
+        <label>@textPrompt:</label>
+        <input type="hidden" name="@(controlId)" id="@(controlId)" data-jid="v-@jid" />
+        <select id="v-@jid"
+                name="v-@jid"
+                data-val="@isRequired"
+                data-val-required="@jid is required.">
+            <option></option>
+            @foreach (var attributeValue in attribute.Values)
+            {
+                <option selected="@attributeValue.IsPreSelected" value="@attributeValue.Id">@attributeValue.Name</option>
+            }
+        </select>
+        @if (isRequired)
+        {
+            <nop-required />
+            <span class="field-validation-error" data-valmsg-for="v-@jid" data-valmsg-replace="true"></span>
+        }
+    </div>
+}

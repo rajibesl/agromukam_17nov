@@ -1,0 +1,367 @@
+﻿@model ProductDetailsModel
+
+@using Nop.Core
+@using Nop.Core.Domain.Catalog
+@using Nop.Core.Domain.Orders
+@using Nop.Core.Domain.Seo;
+@using Nop.Services.Configuration
+
+@inject Nop.Core.IWebHelper webHelper
+@inject SeoSettings seoSettings
+@inject CatalogSettings catalogSettings
+@inject ISettingService settingService
+@inject IStoreContext  storeContext
+
+@{
+    Layout = "_ColumnsOne";
+
+    //title
+    Html.AddTitleParts(!string.IsNullOrEmpty(Model.MetaTitle) ? Model.MetaTitle : Model.Name);
+    //meta
+    Html.AddMetaDescriptionParts(Model.MetaDescription);
+    Html.AddMetaKeywordParts(Model.MetaKeywords);
+    //page class
+    Html.AppendPageCssClassParts("html-product-details-page");
+
+
+    //canonical URL
+    if (seoSettings.CanonicalUrlsEnabled)
+    {
+        var productUrl = Url.RouteUrl("Product", new { SeName = Model.SeName }, webHelper.GetCurrentRequestProtocol()).ToLowerInvariant();
+        Html.AddCanonicalUrlParts(productUrl, seoSettings.QueryStringInCanonicalUrlsEnabled);
+    }
+
+    var showShareButton = catalogSettings.ShowShareButton;
+
+    //open graph META tags
+    if (seoSettings.OpenGraphMetaTags)
+    {
+        Html.AddHeadCustomParts("<meta property=\"og:type\" content=\"product\" />");
+        Html.AddHeadCustomParts("<meta property=\"og:title\" content=\"" + Html.Encode(Model.Name) + "\" />");
+        Html.AddHeadCustomParts("<meta property=\"og:description\" content=\"" + Html.Encode(Nop.Core.Html.HtmlHelper.StripTags(Model.MetaDescription)) + "\" />");
+        Html.AddHeadCustomParts("<meta property=\"og:image\" content=\"" + Model.DefaultPictureModel.ImageUrl + "\" />");
+        Html.AddHeadCustomParts("<meta property=\"og:image:url\" content=\"" + Model.DefaultPictureModel.ImageUrl + "\" />");
+        Html.AddHeadCustomParts("<meta property=\"og:url\" content=\"" + webHelper.GetThisPageUrl(false) + "\" />");
+        Html.AddHeadCustomParts("<meta property=\"og:site_name\" content=\"" + Html.Encode(Model.CurrentStoreName) + "\" />");
+    }
+
+    //Twitter META tags
+    if (seoSettings.TwitterMetaTags)
+    {
+        Html.AddHeadCustomParts("<meta property=\"twitter:card\" content=\"summary\" />");
+        Html.AddHeadCustomParts("<meta property=\"twitter:site\" content=\"" + Html.Encode(Model.CurrentStoreName) + "\" />");
+        Html.AddHeadCustomParts("<meta property=\"twitter:title\" content=\"" + Html.Encode(Model.Name) + "\" />");
+        Html.AddHeadCustomParts("<meta property=\"twitter:description\" content=\"" + Html.Encode(Nop.Core.Html.HtmlHelper.StripTags(Model.MetaDescription)) + "\" />");
+        Html.AddHeadCustomParts("<meta property=\"twitter:image\" content=\"" + Model.DefaultPictureModel.ImageUrl + "\" />");
+        Html.AddHeadCustomParts("<meta property=\"twitter:url\" content=\"" + webHelper.GetThisPageUrl(false) + "\" />");
+    }
+}
+
+@{
+    var productTabs = await Component.InvokeAsync("Widget", new { widgetZone = "seven_spikes_product_tabs", additionalData = Model });
+    var storeId = (await storeContext.GetCurrentStoreAsync()).Id;
+
+    var productsTabAreEnabled = !string.IsNullOrEmpty(await productTabs.RenderHtmlContentAsync());
+
+    var isDescriptionTabEnabled = await settingService.GetSettingByKeyAsync("tabsettings.enableproductfulldescriptiontab", false, storeId, true);
+    var isSpecificationsTabEnabled = await settingService.GetSettingByKeyAsync("tabsettings.enableproductspecificationstab", false, storeId, true);
+
+    var shouldShowDescription = !string.IsNullOrEmpty(Model.FullDescription) && (!productsTabAreEnabled || !isDescriptionTabEnabled);
+    var shouldShowSpecifications = !productsTabAreEnabled || !isSpecificationsTabEnabled;
+}
+
+<!--product breadcrumb-->
+@section Breadcrumb
+{
+    @await Html.PartialAsync("_ProductBreadcrumb", Model.Breadcrumb)
+}
+@await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ProductDetailsAfterBreadcrumb, additionalData = Model })
+<div class="page product-details-page">
+    <div class="page-body">
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ProductDetailsTop, additionalData = Model })
+        <form asp-route="Product" asp-route-sename="@Model.SeName" method="post" id="product-details-form">
+            <div itemscope itemtype="http://schema.org/Product" data-productid="@Model.Id">
+                <div class="product-essential-wrapper container-fluid pt-2">
+                    @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ProductDetailsEssentialTop, additionalData = Model })
+                    <div class="row">
+                        <div class="col-12 col-lg pr-lg-1">
+                            <div class="card border-0 rounded-0 h-100">
+                                <div class="row no-gutters">
+                                    <aside class="col-12 col-lg-5">
+                                        <article class="gallery-wrap">
+                                            @await Html.PartialAsync("_ProductDetailsPictures", Model)
+                                        </article>
+                                    </aside>
+                                    <main class="col-12 col-lg-7">
+                                        <article class="content-body p-3">
+
+                                            @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ProductDetailsOverviewTop, additionalData = Model })
+
+                                            @*@await Component.InvokeAsync("Widget", new { widgetZone = "product_details_campaign_info", additionalData = new { productId = Model.Id } })*@
+
+                                            @if (Model.IsOnFlashSale)
+                                            {
+                                                @await Html.PartialAsync("_FlashSaleBanner", Model.FlashSaleDetails)
+                                            }
+
+                                            <div class="product-name">
+                                                <h5 class="title text-deep-green" itemprop="name">
+                                                    @Model.Name
+                                                </h5>
+                                            </div>
+                                            <div class=" row no-gutters mt-2 mb-2">
+                                                <div class="col-12 col-xl pt-2">
+                                                    <!--product reviews-->
+                                                    @await Html.PartialAsync("_ProductReviewOverview", Model.ProductReviewOverview)
+                                                </div>
+                                                <div class="col">
+                                                    @{
+                                                        var dataDictAddToWishlist = new ViewDataDictionary(ViewData);
+                                                        dataDictAddToWishlist.TemplateInfo.HtmlFieldPrefix = $"addtocart_{Model.Id}";
+
+                                                        <button class="btn btn-link pt-1 pb-1" onclick="AjaxCart.addproducttocart_details('@Url.RouteUrl("AddProductToCart-Details", new {productId = Model.Id, shoppingCartTypeId = (int) ShoppingCartType.Wishlist})', '#product-details-form');return false;">
+                                                            <i class="fa fa-heart"></i>
+                                                            Add to Wishlist
+                                                        </button>
+                                                    }
+                                                </div>
+                                                <div class="col">
+                                                    @{
+                                                        var addtocomparelink = Url.RouteUrl("AddProductToCompare", new { productId = Model.Id });
+
+                                                        <button class="btn btn-link pt-1 pb-1" onclick="AjaxCart.addproducttocomparelist('@addtocomparelink');return false;">
+                                                            <i class="fa fa-book-open"></i>
+                                                            Compare
+                                                        </button>
+                                                    }
+                                                </div>
+
+
+                                            </div>
+
+                                            @if (!String.IsNullOrEmpty(Model.ShortDescription))
+                                            {
+                                                <div class="short-description p-2 border-top-muted border-bottom-muted mb-3">
+                                                    @Html.Raw(Model.ShortDescription)
+                                                </div>
+                                            }
+
+                                            @await Html.PartialAsync("_Discontinued", Model)
+
+                                            <!--manufacturers-->
+                                            @await Html.PartialAsync("_ProductManufacturers", Model.ProductManufacturers)
+
+                                            <!--SKU, MAN, GTIN, vendor-->
+                                            @await Html.PartialAsync("_SKU_Man_GTIN_Ven", Model)
+
+                                            <!--delivery-->
+                                            @await Html.PartialAsync("_DeliveryInfo", Model)
+
+                                            <!--price-->
+                                            @{
+                                                var dataDictPrice = new ViewDataDictionary(ViewData);
+                                                dataDictPrice.TemplateInfo.HtmlFieldPrefix = $"price_{Model.Id}";
+                                                @await Html.PartialAsync("_ProductPrice", Model.ProductPrice, dataDictPrice)
+
+                                                @await Html.PartialAsync("_ProductTierPrices", Model.TierPrices,
+                                                          new ViewDataDictionary(this.Vi‌​ewData) {
+                                                            {
+                                                              "originalPrice", Model.ProductPrice.PriceValue
+                                                            }
+                                                          })
+                                            }
+
+                                            <div class="availability-attributes-wrapper">
+                                                <!--attributes-->
+                                                @{
+                                                    var dataDictAttributes = new ViewDataDictionary(ViewData);
+                                                    dataDictAttributes.TemplateInfo.HtmlFieldPrefix = $"attributes_{Model.Id}";
+                                                    @await Html.PartialAsync("_ProductAttributes", Model.ProductAttributes, dataDictAttributes)
+                                                }
+                                                <!--rental info-->
+                                                @{
+                                                    var dataDictRental = new ViewDataDictionary(ViewData);
+                                                    dataDictRental.TemplateInfo.HtmlFieldPrefix = $"rental_{Model.Id}";
+                                                    @await Html.PartialAsync("_RentalInfo", Model, dataDictRental)
+                                                }
+                                                <!--availability-->
+                                                @if (!String.IsNullOrWhiteSpace(Model.StockAvailability))
+                                                {
+                                                    <div class="availability">
+                                                        <div class="stock">
+                                                            <span class="label">@T("Products.Availability"):</span>
+                                                            <span class="value" id="stock-availability-value-@Model.Id">@Model.StockAvailability</span>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            </div>
+                                            <!--gift card-->
+                                            @{
+                                                var dataDictGiftCard = new ViewDataDictionary(ViewData);
+                                                dataDictGiftCard.TemplateInfo.HtmlFieldPrefix = $"giftcard_{Model.Id}";
+                                                @await Html.PartialAsync("_GiftCardInfo", Model.GiftCard, dataDictGiftCard)
+                                            }
+
+                                            @if (Model.AddToCart.CustomerEntersPrice)
+                                            {
+                                                <div class="customer-entered-price">
+                                                    <div class="price-input">
+                                                        <label for="addtocart_@(Model.Id)_CustomerEnteredPrice" class="enter-price-label">@T("Products.EnterProductPrice")</label>
+                                                        @*round price*@
+                                                        <input type="text" id="addtocart_@(Model.Id)_CustomerEnteredPrice" name="addtocart_@(Model.Id).CustomerEnteredPrice" value="@Convert.ToInt32(Math.Ceiling(Model.AddToCart.CustomerEnteredPrice))" class="enter-price-input" />
+                                                    </div>
+                                                    <div class="price-range">
+                                                        @Model.AddToCart.CustomerEnteredPriceRange
+                                                    </div>
+                                                </div>
+                                            }
+
+                                            <!--minimum quantity notification-->
+                                            @*@if (!String.IsNullOrEmpty(Model.AddToCart.MinimumQuantityNotification))
+        {
+            <div class="min-qty-notification">@Model.AddToCart.MinimumQuantityNotification</div>
+        }*@
+
+                                            @if (!string.IsNullOrEmpty(Model.AddToCart.PreOrderAvailabilityStartDateTimeUserTime))
+                                            {
+                                                <div class="pre-order-availability-date">
+                                                    <label>@T("ShoppingCart.PreOrderAvailability"):</label>
+                                                    @Html.Raw(Model.AddToCart.PreOrderAvailabilityStartDateTimeUserTime)
+                                                </div>
+                                            }
+
+                                            <!--buttons-->
+                                            <div class="overview-buttons">
+                                                @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ProductDetailsInsideOverviewButtonsBefore, additionalData = Model })
+                                                <!--add to cart-->
+                                                @{
+                                                    var dataDictAddToCart = new ViewDataDictionary(ViewData);
+                                                    dataDictAddToCart.TemplateInfo.HtmlFieldPrefix = $"addtocart_{Model.Id}";
+                                                    @await Html.PartialAsync("_AddToCart", Model.AddToCart, dataDictAddToCart)
+                                                }
+
+                                                <!--back in stock subscription button-->
+                                                @if (Model.DisplayBackInStockSubscription)
+                                                {
+                                                    <div class="back-in-stock-subscription-button-wrapper" title="@T("backinstocksubscriptions.notifymewhenavailable")">
+                                                        @await Html.PartialAsync("_BackInStockSubscription", Model)
+                                                    </div>
+                                                }
+
+                                                <!--sample download button-->
+                                                @if (Model.HasSampleDownload)
+                                                {
+                                                    <div class="download-sample-button-wrapper" title="@T("products.downloadsample")">
+                                                        @await Html.PartialAsync("_DownloadSample", Model)
+                                                    </div>
+                                                }
+
+                                                @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ProductDetailsInsideOverviewButtonsAfter, additionalData = Model })
+                                            </div>
+
+                                            @await Component.InvokeAsync("Widget", new { widgetZone = "venture_theme_submit_ticket_product_page_button", additionalData = Model.Id })
+
+
+                                            @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ProductDetailsOverviewBottom, additionalData = Model })
+
+                                        </article>
+                                    </main>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-auto pl-lg-1 mt-2 mt-lg-0">
+                            <div class="card border-0 rounded-0 product-details-sidebar h-100">
+                                @await Component.InvokeAsync("Widget", new { widgetZone = "product_details_sidebar", additionalData = new { productId = Model.Id } })
+                            </div>
+                        </div>
+                    </div>
+                    @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ProductDetailsEssentialBottom, additionalData = Model })
+
+
+
+                </div>
+                <div class="product-page-bottom pt-2">
+                    @await Component.InvokeAsync("Widget", new { widgetZone = "productdetails_before_collateral", additionalData = Model.Id })
+
+                    <nav class="navbar navbar-expand navbar-light pt-0 pb-0 bg-transparent" id="productCollateralNav">
+                        <div class="collapse navbar-collapse">
+                            <div class="navbar-nav m-auto">
+                                <a class="nav-link" href="#description">@T("ProductDetails.Description")</a>
+                                <a class="nav-link" href="#specifications">@T("ProductDetails.Specifications")</a>
+                                <a class="nav-link" href="#reviews">@T("ProductDetails.Reviews")</a>
+                            </div>
+                        </div>
+                    </nav>
+
+                    <div class="product-collateral container-fluid mt-2">
+
+                        <div class="row">
+                            <div class="col-12 col-lg pr-lg-1 pc-wrap">
+                                <div class="card rounded-0 border-0" id="description">
+                                    <div class="card-header border-0 bg-light">
+                                        <h6>
+                                            <i class="far fa-clipboard text-light-green mr-2"></i>
+                                        @T("Product.Description")
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="full-description" itemprop="description">
+                                            @if (!string.IsNullOrEmpty(Model.FullDescription))
+                                            {
+                                                @Html.Raw(Model.FullDescription)
+                                            }
+                                            else
+                                            {
+                                                <h6> No description for <b> @Model.Name </b> </h6>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card rounded-0 border-0 mt-2" id="specifications">
+                                    <div class="card-header border-0 bg-light">
+                                        <h6>
+                                            <i class="fas fa-list text-light-green mr-2"></i>
+                                            @T("Product.Specifications")
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        @await Html.PartialAsync("_ProductSpecifications", Model.ProductSpecificationModel)
+                                    </div>
+                                </div>
+
+                                <div class="card rounded-0 border-0 mt-2 mb-3" id="reviews">
+                                    <div class="card-header border-0 bg-light">
+                                        <h6>
+                                            <i class="far fa-star text-light-green mr-2"></i>
+                                            @T("Product.Ratings&Reviews")
+                                        </h6>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        @await Html.PartialAsync("_ProductReview.CustomTemplate", Model.ProductReviewOverview)
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-lg-auto pl-lg-1">
+                                @await Html.PartialAsync("_BestSellers", Model.Id)
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="product-page-bottom-after-collateral container-fluid pt-2">
+                    <div class="row">
+                        <div class="col">
+                            @await Html.PartialAsync("_ProductTags", Model.ProductTags)
+                            @await Component.InvokeAsync("ProductsAlsoPurchased", new { productId = Model.Id })
+                            @await Component.InvokeAsync("RelatedProducts", new { productId = Model.Id })
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ProductDetailsBottom, additionalData = Model })
+    </div>
+</div>

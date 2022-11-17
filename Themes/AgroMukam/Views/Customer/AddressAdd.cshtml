@@ -1,0 +1,37 @@
+﻿@model CustomerAddressEditModel
+@{
+    Layout = "_ColumnsTwo";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.Account").Text);
+    Html.AppendPageCssClassParts("html-account-page");
+    //page class
+    Html.AppendPageCssClassParts("html-address-edit-page");
+}
+@section left
+{
+    @await Html.PartialAsync("_CustomerNavigation", "address-book")
+}
+<form asp-route="CustomerAddressAdd" method="post">
+    <div class="page account-page address-edit-page">
+        <div class="p-title">
+            <h5> @T("Account.CustomerAddresses.AddNew") </h5>
+            <a href="@Url.RouteUrl("CustomerAddresses")"> Go back to addressbook </a>
+        </div>
+        <div class="page-body pt-3">
+            <div asp-validation-summary="ModelOnly" class="message-error"></div>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    @{
+                        var dataDictAddress = new ViewDataDictionary(ViewData);
+                        dataDictAddress.TemplateInfo.HtmlFieldPrefix = "Address";
+                        @await Html.PartialAsync("_CreateOrUpdateAddress", Model.Address, dataDictAddress)
+                    }
+                </div>
+                <div class="card-footer">
+                    <input type="submit" class="button-2 btn btn-primary save-address-button" value="@T("Common.Save")" />
+                </div>
+            </div>
+        </div>
+    </div>
+</form>

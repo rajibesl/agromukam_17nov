@@ -1,0 +1,211 @@
+﻿@model AddressModel
+
+<input asp-for="Id" type="hidden" />
+<div class="edit-address">
+    <div class="fieldset">
+        <div class="form-fields">
+
+            @if (ViewData["IsCheckoutAddress"] == null)
+            {
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-12 col-sm-12 col-md-4 col-lg-4 col-xl-4 text-right">
+                            <input asp-for="IsDefaultShippingAddress" class="form-check-input" />
+                        </div>
+                        <div class="col-12 col-sm-12 col-md-5 col-lg-5 col-xl-5">
+                            Is Default Shipping Address
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-12 col-sm-12 col-md-4 col-lg-4 col-xl-4 text-right">
+                            <input asp-for="IsDefaultBillingAddress" class="form-check-input" />
+                        </div>
+                        <div class="col-12 col-sm-12 col-md-5 col-lg-5 col-xl-5">
+                            Is Default Billing Address
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="form-group">
+                <div class="row">
+                    <label asp-for="FirstName" asp-postfix=":" class="col-12 col-sm-12 col-md-4 col-lg-4 col-xl-4 col-form-label"></label>
+                    <div class="col-12 col-sm-12 col-md-5 col-lg-5 col-xl-5">
+                        <input asp-for="FirstName" class="form-control" />
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-3 col-lg-3 col-xl-3">
+                        <nop-required />
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 text-center">
+                        <span class="mt-1" asp-validation-for="FirstName"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="row">
+                    <label asp-for="LastName" asp-postfix=":" class="col-12 col-sm-12 col-md-4 col-lg-4 col-xl-4 col-form-label"></label>
+                    <div class="col-12 col-sm-12 col-md-5 col-lg-5 col-xl-5">
+                        <input asp-for="LastName" class="form-control" />
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-3 col-lg-3 col-xl-3">
+                        <nop-required />
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 text-center">
+                        <span class="mt-1" asp-validation-for="LastName"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="row">
+                    <label asp-for="Email" class="col-12 col-sm-12 col-md-4 col-lg-4 col-xl-4 col-form-label"></label>
+                    <div class="col-12 col-sm-12 col-md-5 col-lg-5 col-xl-5">
+                        <input asp-for="Email" class="form-control" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="row">
+                    <label asp-for="PhoneNumber" class="col-12 col-sm-12 col-md-4 col-lg-4 col-xl-4 col-form-label"></label>
+                    <div class="col-12 col-sm-12 col-md-5 col-lg-5 col-xl-5">
+                        <input asp-for="PhoneNumber" class="form-control" />
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-3 col-lg-3 col-xl-3">
+                        <nop-required />
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 text-center">
+                        <span asp-validation-for="PhoneNumber"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="address-fields">
+                <input type="hidden" value="20" name="CountryId" id="CountryId" />
+
+                <div class="form-group">
+                    <div class="row">
+                        <label asp-for="RegionId" class="col-12 col-sm-12 col-md-4 col-lg-4 col-xl-4 col-form-label"></label>
+                        <div class="col-12 col-sm-12 col-md-5 col-lg-5 col-xl-5 g-pre">
+                            <select class="form-control" asp-for="RegionId"></select>
+                        </div>
+                        <div class="col-12 col-sm-12 col-md-3 col-lg-3 col-xl-3">
+                            <nop-required />
+                        </div>
+                        <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 text-center">
+                            <span class="mt-1" asp-validation-for="RegionId"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="row">
+                        <label asp-for="CityId" class="col-12 col-sm-12 col-md-4 col-lg-4 col-xl-4 col-form-label"></label>
+                        <div class="col-12 col-sm-12 col-md-5 col-lg-5 col-xl-5 g-pre">
+                            <select class="form-control" asp-for="CityId"></select>
+                        </div>
+                        <div class="col-12 col-sm-12 col-md-3 col-lg-3 col-xl-3">
+                            <nop-required />
+                        </div>
+                        <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 text-center">
+                            <span class="mt-1" asp-validation-for="CityId"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="row">
+                        <label asp-for="AreaId" class="col-12 col-sm-12 col-md-4 col-lg-4 col-xl-4 col-form-label"></label>
+                        <div class="col-12 col-sm-12 col-md-5 col-lg-5 col-xl-5 g-pre">
+                            <select class="form-control" asp-for="AreaId"></select>
+                        </div>
+                        <div class="col-12 col-sm-12 col-md-3 col-lg-3 col-xl-3">
+                            <nop-required />
+                        </div>
+                        <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 text-center">
+                            <span class="mt-1" asp-validation-for="AreaId"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="row">
+                        <label asp-for="Address1" class="col-12 col-sm-12 col-md-4 col-lg-4 col-xl-4 col-form-label"></label>
+                        <div class="col-12 col-sm-12 col-md-5 col-lg-5 col-xl-5 g-pre">
+                            <textarea class="form-control" asp-for="Address1" rows="3" style="height: auto;"></textarea>
+                        </div>
+                        <div class="col-12 col-sm-12 col-md-3 col-lg-3 col-xl-3">
+                            <nop-required />
+                        </div>
+                        <div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12 text-center">
+                            <span class="mt-1" asp-validation-for="Address1"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.CustomAddressAttributes.Count > 0)
+            {
+                @await Html.PartialAsync("_AddressAttributes", Model.CustomAddressAttributes)
+            }
+        </div>
+    </div>
+</div>
+
+<script asp-location="Footer">
+
+    $(document).ready(function () {
+
+        var emptyOption = '';
+        const prefix = $('.g-pre select').attr('id').split('_')[0];
+        $('#CountryId')
+            .attr('id', `${prefix}_CountryId`)
+            .attr('name', `${prefix}.CountryId`)
+
+        function generateAddressOptions(selector, data, selectedVal) {
+            var el = $(selector);
+            el.html(emptyOption);
+
+            $.each(data,
+                function (id, option) {
+                    el.append($('<option></option>').val(option.Id)
+                        .html(option.Name));
+                });
+
+            el.val(selectedVal);
+            setTimeout(function () {
+                $(selector).trigger('change');
+            }, 0);
+        }
+
+        var selectedCountry = $(`#${prefix}_CountryId`).val();
+        var url = `@(Url.RouteUrl("GetRegionsByCountryId"))?countryId=${selectedCountry}`;
+
+        $.get(url, function (resp) {
+            generateAddressOptions(`#${prefix}_RegionId`, resp, `@Model.RegionId`);
+        });
+
+        $(`#${prefix}_RegionId`).change(function () {
+            $(`#${prefix}_AreaId`).html(emptyOption);
+            var val = $(this).val();
+            var url = `@(Url.RouteUrl("GetCitiesByRegionId"))?regionId=${val}`;
+
+            $.get(url, function (resp) {
+                generateAddressOptions(`#${prefix}_CityId`, resp, `@Model.CityId`);
+            });
+        });
+
+        $(`#${prefix}_CityId`).change(function () {
+            $(`#${prefix}_AreaId`).html(emptyOption);
+            var val = $(this).val();
+            var url = `@(Url.RouteUrl("GetAreasByCityId"))?cityId=${val}`;
+
+            $.get(url, function (resp) {
+                generateAddressOptions(`#${prefix}_AreaId`, resp, `@Model.AreaId`);
+            });
+
+        });
+
+    });
+
+</script>

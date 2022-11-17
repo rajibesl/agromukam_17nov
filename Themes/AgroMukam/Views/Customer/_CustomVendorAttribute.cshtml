@@ -1,0 +1,115 @@
+﻿@model VendorAttributeModel
+@using Nop.Services.Vendors
+@using Nop.Core.Domain.Catalog
+@{
+    var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{Model.Id}";
+    var textPrompt = Model.Name;
+
+    var className = this.ViewData["className"];
+    var isRequired = !textPrompt.ToLower().Contains("business registration no");
+}
+
+<div class="form-group pl-5 pr-5 @className">
+    <label>
+        <span class="lbl-txt">@textPrompt</span>
+        @if (isRequired)
+        {
+            <span class="text-danger ml-2">*</span>
+        }
+    </label>
+
+    @switch (Model.AttributeControlType)
+    {
+        case AttributeControlType.DropdownList:
+            {
+                <select class="form-control"
+                        name="@(controlId)"
+                        id="@(controlId)"
+                        @(isRequired ? "data-val=true" : "")
+                        @(isRequired ? $"data-val-required-val={textPrompt} is required." : "")>
+                    @*@if (!Model.IsRequired)
+                        {
+                            <option value="0">---</option>
+                        }*@
+                    @foreach (var attributeValue in Model.Values)
+                    {
+                        <option selected="@attributeValue.IsPreSelected"
+                                value="@attributeValue.Id">
+                            @attributeValue.Name
+                            </option>
+                        }
+                </select>
+            }
+            break;
+        case AttributeControlType.RadioList:
+            {
+                <ul class="option-list">
+                    @foreach (var attributeValue in Model.Values)
+                    {
+                        <li>
+                            <input id="@(controlId)_@(attributeValue.Id)"
+                                   type="radio"
+                                   name="@(controlId)"
+                                   value="@attributeValue.Id"
+                                   checked="@attributeValue.IsPreSelected" />
+                            <label for="@(controlId)_@(attributeValue.Id)">
+                                @attributeValue.Name
+                            </label>
+                        </li>
+                    }
+                </ul>
+            }
+            break;
+        case AttributeControlType.Checkboxes:
+        case AttributeControlType.ReadonlyCheckboxes:
+            {
+                <div class="inputs">
+                    <ul class="option-list">
+                        @foreach (var attributeValue in Model.Values)
+                        {
+                            <li>
+                                <input id="@(controlId)_@(attributeValue.Id)"
+                                       type="checkbox"
+                                       name="@(controlId)"
+                                       value="@attributeValue.Id"
+                                       checked="@attributeValue.IsPreSelected" @(Model.AttributeControlType == AttributeControlType.ReadonlyCheckboxes ? Html.Raw(" disabled=\"disabled\"") : null) />
+                                <label for="@(controlId)_@(attributeValue.Id)">@attributeValue.Name</label>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            }
+            break;
+        case AttributeControlType.TextBox:
+            {
+                <input name="@(controlId)"
+                       type="text"
+                       class="textbox form-control @(isRequired ? "" : "not-required")"
+                       id="@(controlId)"
+                       value="@Model.DefaultValue"
+                       @(isRequired ? "data-val=true" : "")
+                       @(isRequired ? $"data-val-required-val={textPrompt} is required." : "") />
+            }
+            break;
+        case AttributeControlType.MultilineTextbox:
+            {
+                <textarea id="@(controlId)" name="@(controlId)" class="form-control">@Model.DefaultValue</textarea>
+            }
+            break;
+        case AttributeControlType.Datepicker:
+        case AttributeControlType.FileUpload:
+        case AttributeControlType.ColorSquares:
+        case AttributeControlType.ImageSquares:
+            {
+                //not support attribute type
+            }
+            break;
+    }
+    @*<nop-required />*@
+    @if (isRequired)
+    {
+        <span class="field-validation-valid"
+              data-valmsg-for="@(controlId)"
+              data-valmsg-replace="true"></span>
+    }
+</div>

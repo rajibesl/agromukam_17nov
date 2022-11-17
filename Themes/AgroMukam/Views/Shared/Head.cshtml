@@ -1,0 +1,110 @@
+﻿@using Nop.Core
+@using Nop.Services.Helpers
+@inject IWorkContext workContext
+@inject IThemeContext themeContext
+@inject IUserAgentHelper userAgentHelper
+@{
+    var supportRtl = (await workContext.GetWorkingLanguageAsync()).Rtl;
+    var themeName = await themeContext.GetWorkingThemeNameAsync();
+
+    /*
+        * Experiement Page loading performance
+        * Try: load non-critical css asynchronously
+    */
+    //add main CSS file
+    if (supportRtl)
+    {
+        <link rel="stylesheet" href="/Themes/AgroMukam/Content/css/styles.rtl.css" media="print" onload="this.media='all'">
+    }
+    else
+    {
+        // critical inline (internal) styles
+        <style>
+            body {
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                right: 0;
+                overflow-y: scroll;
+                overflow-x: hidden;
+            }
+            /* Let's get this party started */
+            ::-webkit-scrollbar {
+                width: 10px;
+            }
+            /* Track */
+            ::-webkit-scrollbar-track {
+                -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+            }
+            /* Handle */
+            ::-webkit-scrollbar-thumb {
+                background: rgba(105, 164, 31, .7);
+                -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+            }
+
+                ::-webkit-scrollbar-thumb:window-inactive {
+                    background: rgba(105, 164, 31, .3);
+                }
+
+            .auth-page-nav {
+                display: none;
+            }
+
+            .hide-nav header,
+            .hide-nav footer,
+            .html-login-page header,
+            .html-login-page footer,
+            .html-registration-page header,
+            .html-registration-page footer,
+            .html-special-page header,
+            .html-special-page footer {
+                display: none;
+            }
+
+            .html-login-page .auth-page-nav,
+            .html-registration-page .auth-page-nav,
+            .html-special-page .auth-page-nav {
+                display: block;
+                position: sticky;
+                top: 0;
+                z-index: 999;
+            }
+
+            .html-special-page .go-to-top {
+                visibility: hidden !important;
+            }
+        </style>
+        // load bootstrap.css normally
+        <link rel="stylesheet" href="/Themes/AgroMukam/Content/css/bootstrap.css">
+        // load all other css asynchronously
+        <link rel="stylesheet" href="/Themes/AgroMukam/Content/css/ui.css" media="print" onload="this.media='all'">
+        <link rel="stylesheet" href="/Themes/AgroMukam/Content/css/root-theme-styles.css" media="print" onload="this.media='all'">
+        <link rel="stylesheet" href="/Themes/AgroMukam/Content/css/responsive.css" media="print" onload="this.media='all'">
+        <link rel="stylesheet" href="/Themes/AgroMukam/Content/fontawesome/css/all.css" media="print" onload="this.media='all'">
+        <link rel="stylesheet" href="/Themes/AgroMukam/Content/slick/slick.css" media="print" onload="this.media='all'">
+        <link rel="stylesheet" href="/Themes/AgroMukam/Content/slick/slick-theme.css" media="print" onload="this.media='all'">
+        <link rel="stylesheet" href="/Themes/AgroMukam/Content/css/tree.css" media="print" onload="this.media='all'">
+        <link rel="stylesheet" href="/Themes/AgroMukam/Content/css/custom.css" media="print" onload="this.media='all'">
+
+        @* Algolia SearchBox theme, we could design our own, but let's not re-invent the wheel now *@
+        <link 
+              rel="stylesheet"
+              href="https://cdn.jsdelivr.net/npm/@@algolia/autocomplete-theme-classic" 
+              media="print"
+              onload="this.media='all'" />
+        <link 
+              rel="stylesheet" 
+              type="text/css"
+              href="https://cdn.jsdelivr.net/npm/instantsearch.css@7.4.5/themes/satellite-min.css" 
+              media="print" 
+              onload="this.media='all'" />
+        <link 
+              rel="stylesheet" 
+              type="text/css"
+              href="/Themes/AgroMukam/Content/css/algo-custom.css?v=@DateTime.UtcNow.Millisecond" 
+              media="print" 
+              onload="this.media='all'" />
+
+    }
+}

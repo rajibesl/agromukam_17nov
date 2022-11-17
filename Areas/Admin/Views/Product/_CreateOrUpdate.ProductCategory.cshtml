@@ -1,0 +1,300 @@
+﻿@model int
+@using Nop.Services.Catalog
+@inject ICategoryService _categoryService
+@{
+    var allCategories = (await _categoryService.GetAllCategoriesAsync())
+        .Where(x => !x.Name.Contains("Services") && !x.Name.Contains("Courier"))
+        .Select(x =>
+        {
+            return new
+            {
+                Id = x.Id,
+                Name = x.Name,
+                ParentCategoryId = x.ParentCategoryId
+            };
+        });
+    var categories = Json.Serialize(allCategories);
+}
+<link rel="stylesheet" href="~/js/slick-slider-1.6.0.css">
+<link rel="stylesheet" href="~/css/admin/custom.css">
+<input id="SelectedCategoryIds" name="SelectedCategoryIds" type="hidden" value="@Model" />
+<div class="modal-content">
+    <div class="modal-header d-flex flex-row">
+        <div class="d-flex">
+            <h5 class="modal-title text-success" id="myModalLabel">Change Category</h5>
+        </div>
+        <div class="d-flex">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    </div>
+    <div class="modal-body p-2">
+
+        <h6 class="original-category-txt text-muted mb-0 pl-3">Original Category: <span></span></h6>
+        <h6 class="target-category-txt text-info mb-0 pl-3">Target Category: <span></span></h6>
+        <hr>
+        <div id="tabstrip">
+            <ul>
+                <li class="k-state-active">
+                    Select Category
+                </li>
+                <li>
+                    Recently Used Categories
+                </li>
+            </ul>
+            <div>
+                <div class="selection-boxes"></div>
+            </div>
+            <div>
+                <div class="selection-boxes-recently-used"></div>
+            </div>
+        </div>
+
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary save-selection" disabled>Save changes</button>
+    </div>
+</div>
+
+<script src="~/js/slick-slider-1.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+
+        /**
+         * TODO: create stand-alone plugin out of this junk
+         * ETA: 21st March, 2020
+         * */
+
+        var tabStrip = $("#tabstrip").kendoTabStrip().data("kendoTabStrip");
+
+        var allCategories = JSON.parse(`@categories`);
+        var selectedCategory = 0;
+
+        // Product category (already selected)
+        var selected = JSON.parse(`@Json.Serialize(Model)`);
+        if (selected > 0) {
+            var text = generateSelectedCategoryText('', selected, false);
+            $('.product-category-select button[data-toggle="modal"]')
+                .text(text);
+        }
+
+        function generateSelectedCategoryText(text, current, prepend) {
+            var category = allCategories.find(x => x.Id == current);
+            text = prepend ? category.Name + ' >> ' + text : category.Name;
+            if (category.ParentCategoryId > 0) {
+                var parent = allCategories.find(x => x.Id == category.ParentCategoryId);
+                return generateSelectedCategoryText(text, parent.Id, true);
+            } else {
+                return text;
+            }
+        }
+
+        function appendListToTheGrid(listElements) {
+            var html = `<div class="list-group-wrapper">
+                <div class="list-group-content">
+                    <div class="list-group-filter p-2">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="Type to search">
+                            <span class="input-group-append">
+                                <span class="input-group-text">&#x1F50D;</span>
+                            </span>
+                        </div>
+                    </div>
+                    <ul class="list-group">
+                        ${listElements}
+                    </ul>
+                </div>
+            </div>`;
+            $('.selection-boxes')
+                .slick('slickAdd', html)
+                .slick('slickNext');
+        }
+
+        function generateList(parentId) {
+            var temp = allCategories
+                .filter(x => x.ParentCategoryId == parentId);
+
+            if (temp.length == 0) {
+                return;
+            }
+
+            var categories = temp.map(x => (
+                x.SubList = allCategories
+                    .filter(y => y.ParentCategoryId == x.Id),
+                x
+            ));
+
+            var html = '';
+            for (var item of categories) {
+                html += `<li
+                        class="list-group-item"
+                        data-id="${item.Id}"
+                        data-parent-id="${item.ParentCategoryId}"
+                        data-has-sublist="${item.SubList.length > 0}"
+                    >
+                    ${item.SubList.length > 0
+                        ? '<i class="fa fa-chevron-right sub-list-indicator"></i>'
+                        : ''}
+                    <span data-original-text="${item.Name}">${item.Name}</span>
+                </li>`;
+            }
+            appendListToTheGrid(html);
+        }
+
+        function getRecentlyUsedCategories() {
+            var recentCategories = localStorage.getItem('recentCategories');
+            var categories = JSON.parse(recentCategories);
+            var html = '<ul class="list-group">';
+            for (var item of categories) {
+                html += `<li
+                        class="list-group-item recent-list"
+                        data-id="${item.id}"
+                    >
+                    <span data-original-text="${item.text}">${item.text}</span>
+                </li>`;
+            }
+            html += '</ul>';
+            $('.selection-boxes-recently-used').html(html);
+        }
+
+        function setRecentlyUsedCategories() {
+            var recentCategories = localStorage.getItem('recentCategories');
+            var categories = JSON.parse(recentCategories);
+
+            var exist = categories.find(x => x.id == selectedCategory);
+            if (!exist) {
+                categories.push({
+                    id: $('#SelectedCategoryIds').val(),
+                    text: $('.product-category-select button[data-toggle="modal"]')
+                        .text()
+                });
+
+                // take most recent 10 categories
+                if (categories.length > 10) {
+                    categories = categories.slice(Math.max(categories.length - 10, 0))
+                }
+
+                localStorage.setItem('recentCategories', JSON.stringify(categories));
+            }
+        }
+
+        $('body').on('click', '.list-group-item.recent-list', function () {
+            var id = $(this).data('id');
+            var text = $(this).text();
+            $('.target-category-txt span').text(text);
+            selectedCategory = id;
+        });
+
+        // attach click listener to list items
+        $('body').on('click', '.list-group-item', function () {
+            // ignore clicks on already active items
+            if ($(this).hasClass('active')) {
+                return;
+            }
+
+            // set active class
+            $(this)
+                .addClass('active')
+                .siblings()
+                .removeClass('active');
+
+            // enable/disable selection button
+            if ($(this).data('hasSublist')) {
+                $('.save-selection').attr('disabled', true);
+            } else {
+                $('.save-selection').removeAttr('disabled');
+            }
+
+            // remove all list-groups on the right
+            var parent = $(this).parentsUntil('.slick-track');
+            var parentEl = parent[parent.length - 1];
+            $(parentEl).nextAll().remove();
+            $('.selection-boxes').slick('slickPrev');
+
+            // target category text
+            var targetCategoryEl = $('.target-category-txt > span');
+            targetCategoryEl.html('');
+            var text = '';
+            for (var [el, i] of Array.from($('.list-group-item.active')).entries()) {
+                text += `${el > 0 ? ' >> ' : ''}${i.textContent.trim()}`;
+            }
+            targetCategoryEl.html('').html(text);
+
+            // generate appropriate list-group
+            var id = $(this).data('id');
+            selectedCategory = id;
+            generateList(id);
+        });
+
+        // attach input change listener for filtering list-group-items
+        $('body').on('keyup', '.list-group-filter input', function (e) {
+            var { value } = e.target;
+
+            //
+            var addThis = value.trim().length > 0 ? 'fa-times' : 'fa-search';
+            var removeThis = value.trim().length > 0 ? 'fa-search' : 'fa-times';
+            $(e.target).next('span').find('i').removeClass(removeThis).addClass(addThis);
+
+            $(this)
+                .parent()
+                .parent()
+                .next()
+                .find('li')
+                .each(function () {
+                    var span = $(this).find('span');
+                    var txt = span.data('originalText');
+                    var regex = new RegExp(value, 'ig');
+                    var match = regex.test(txt);
+                    if (match) {
+                        // highlight the match
+                        var html = txt.replace(regex, `<span style='color: #64DD17;'>${value}</span>`);
+                        span.html(html);
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+        });
+
+        $('.save-selection').click(function () {
+            $('.product-category-select button[data-toggle="modal"]')
+                .text($('.target-category-txt span').text());
+
+            $('#SelectedCategoryIds').val(selectedCategory);
+            $('#categorySelectionModal').modal('hide');
+            setRecentlyUsedCategories();
+        });
+
+        // When category-selection modal is open
+        $('#categorySelectionModal').on('shown.bs.modal', function (e) {
+            $('.selection-boxes').slick({
+                infinite: false,
+                slidesToShow: 4,
+                slidesToScroll: 1,
+                prevArrow: '<i class="fa fa-chevron-circle-left fa-3x slider-arrow-prev">',
+                nextArrow: '<i class="fa fa-chevron-circle-right fa-3x slider-arrow-next">',
+            });
+            // Generate Root-level Category List
+            generateList(0);
+            // Recently used
+            if (!localStorage.getItem('recentCategories')) {
+                localStorage.setItem('recentCategories', JSON.stringify([]));
+            } else {
+                getRecentlyUsedCategories();
+            }
+        });
+
+        // And when the modal is closed
+        $('#categorySelectionModal').on('hidden.bs.modal', function (e) {
+            $('.selection-boxes').slick('unslick').html(' ');
+            $('.selection-boxes-recently-used').html(' ');
+
+            var getItem = function (index) {
+                return tabStrip.tabGroup.children("li").eq(index);
+            };
+            tabStrip.select(getItem('0'));
+        });
+    });
+</script>

@@ -1,0 +1,180 @@
+﻿@model ProductReviewOverviewModel
+
+@inject Nop.Services.Catalog.IProductService _productService
+@inject Nop.Web.Factories.IProductModelFactory _productModelFactory
+
+@{
+
+    var product = await _productService.GetProductByIdAsync(Model.ProductId);
+    var reviewsModel = new ProductReviewsModel();
+    reviewsModel = await _productModelFactory.PrepareProductReviewsModelAsync(reviewsModel, product);
+
+    // what's the average?
+    var average = Model.RatingSum / 5;
+
+    // and how much of n stars?
+    var oneStar = reviewsModel.Items.Where(x => x.Rating == 1).ToList();
+    var twoStars = reviewsModel.Items.Where(x => x.Rating == 2).ToList();
+    var threeStars = reviewsModel.Items.Where(x => x.Rating == 3).ToList();
+    var fourStars = reviewsModel.Items.Where(x => x.Rating == 4).ToList();
+    var fiveStars = reviewsModel.Items.Where(x => x.Rating == 5).ToList();
+}
+<script>
+    console.log(JSON.parse(`@Json.Serialize(Model)`));
+    console.log(JSON.parse(`@Json.Serialize(reviewsModel)`));
+</script>
+<style>
+    .ratings-breakdown h1 span {
+        font-size: 75%;
+    }
+
+    .ratings-breakdown .progress {
+        height: 14px;
+    }
+</style>
+
+<div class="ratings-breakdown px-4 py-5">
+
+    <div class="row">
+        <div class="col-12 col-sm-auto pr-sm-5">
+            <h2>
+                @average <span class="text-muted-x">/5</span>
+            </h2>
+            <div class="row p-2">
+                <div class="col-auto px-1"> <i class="fas fa-star fa-2x text-warning"></i> </div>
+                <div class="col-auto px-1"> <i class="fas fa-star fa-2x text-warning"></i> </div>
+                <div class="col-auto px-1"> <i class="fas fa-star fa-2x text-warning"></i> </div>
+                <div class="col-auto px-1"> <i class="fas fa-star fa-2x text-warning"></i> </div>
+                <div class="col-auto px-1"> <i class="fas fa-star-half-alt fa-2x text-warning"></i> </div>
+            </div>
+            <span class="text-muted"> @Model.TotalReviews ratings </span>
+        </div>
+        <div class="col-12 col-sm-4 mt-3 mt-sm-0">
+            <div class="row px-2">
+                <div class="col-auto px-1">
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="fas fa-star text-warning"></i>
+                </div>
+                <div class="col-2 px-1">
+                    @fiveStars.Count
+                </div>
+            </div>
+            <div class="row px-2">
+                <div class="col-auto px-1">
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="far fa-star text-warning"></i>
+                </div>
+                <div class="col-2 px-1">
+                    @fourStars.Count
+                </div>
+            </div>
+            <div class="row px-2">
+                <div class="col-auto px-1">
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="far fa-star text-warning"></i>
+                    <i class="far fa-star text-warning"></i>
+                </div>
+                <div class="col-2 px-1">
+                    @threeStars.Count
+                </div>
+            </div>
+            <div class="row px-2">
+                <div class="col-auto px-1">
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="far fa-star text-warning"></i>
+                    <i class="far fa-star text-warning"></i>
+                    <i class="far fa-star text-warning"></i>
+                </div>
+                <div class="col-2 px-1">
+                    @twoStars.Count
+                </div>
+            </div>
+            <div class="row px-2">
+                <div class="col-auto px-1">
+                    <i class="fas fa-star text-warning"></i>
+                    <i class="far fa-star text-warning"></i>
+                    <i class="far fa-star text-warning"></i>
+                    <i class="far fa-star text-warning"></i>
+                    <i class="far fa-star text-warning"></i>
+                </div>
+                <div class="col-2 px-1">
+                    @oneStar.Count
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<div class="all-reviews">
+
+    @if (reviewsModel.Items.Count > 0)
+    {
+        <div class="border-top-muted border-bottom-muted py-3 px-4">
+            Product Reviews
+        </div>
+
+        <div class="mt-1 p-3">
+            @foreach (var review in reviewsModel.Items)
+            {
+                <article class="box mb-2 rounded-0 border-muted">
+                    <div class="icontext w-100">
+
+                        <div class="text">
+                            <span class="date text-muted float-md-right"> @review.WrittenOnStr </span>
+                            <h6 class="mb-1 text-muted"> @review.CustomerName </h6>
+
+                            <div class="row">
+                                <div class="col-auto">
+                                    <i class="fas fa-star text-warning"></i>
+                                    <i class="@(review.Rating > 1 ? "fas" : "far") fa-star text-warning"></i>
+                                    <i class="@(review.Rating > 2 ? "fas" : "far")  fa-star text-warning"></i>
+                                    <i class="@(review.Rating > 3 ? "fas" : "far")  fa-star text-warning"></i>
+                                    <i class="@(review.Rating > 4 ? "fas" : "far")  fa-star-half-alt text-warning"></i>
+                                </div>
+                                <div class="col">
+                                    <span class="label-rating text-deep-green">
+                                        @review.Title
+                                    </span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div> <!-- icontext.// -->
+                    <div class="mt-3">
+                        <p>
+                            @review.ReviewText
+                        </p>
+                    </div>
+                </article>
+            }
+        </div>
+
+        <div class="border-top-muted border-bottom-muted mt-2 py-3 px-4 text-center">
+            @if (Model.AllowCustomerReviews && Model.CanAddNewReview)
+            {
+            <a href="@Url.RouteUrl("ProductReviews", new { productId = Model.ProductId })">@T("Reviews.Overview.AddNew")</a>
+            }
+        </div>
+    }
+    else
+    {
+<div class="border-top-muted border-bottom-muted py-3 px-4 text-center">
+    <p class="text-info"> No review yet </p>
+    @if (Model.AllowCustomerReviews && Model.CanAddNewReview)
+    {
+<a href="@Url.RouteUrl("ProductReviews", new { productId = Model.ProductId })">@T("reviews.overview.first")</a>
+        
+    }
+</div>
+    }
+
+</div>

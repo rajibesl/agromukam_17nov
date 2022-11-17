@@ -1,0 +1,91 @@
+﻿@model ShoppingCartModel
+@{
+    Layout = "_ColumnsOne";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.Checkout").Text);
+    //page class
+    Html.AppendPageCssClassParts("html-checkout-page");
+    Html.AppendPageCssClassParts("html-order-confirm-page");
+}
+<div class="page checkout-page order-confirm-page mt-5">
+    @await Html.PartialAsync("_Checkout.Navigation")
+    <div class="page-body checkout-data">
+        <div class="container">
+            <form asp-route="ConfirmPerishableOrder" method="post" id="confirm-order-form">
+                <div class="card">
+                    <div class="card-body text-center">
+
+                        <h3 class="text-light-green"> পচনশীল পণ্য চেকআউট </h3>
+
+                        <h5 class="my-3">
+                            শপিং-কার্টে <b> @Model.Items.Count টি </b> পচনশীল পণ্য আছে। পচনশীল পণ্যের মূল্য পরিশোধ এবং বিতরণ ব্যাবস্থার জন্য এগ্রোমুকাম থেকে শীঘ্রই আপনার সাথে যোগাযোগ করা হবে।
+                        </h5>
+
+                        <h6 class="mt-4">
+                            <b> নোটঃ</b> শপিং-কার্টের অপচনশীল পণ্যগুলো পরবর্তী ধাপে চেকআউট করতে পারবেন।
+                        </h6>
+
+                        <div class="form-check mt-5">
+                            <input class="form-check-input" type="checkbox" value="" id="confirmPerishableOrder">
+                            <label class="form-check-label" for="confirmPerishableOrder">
+                                বুঝতে পেরেছি। পরবর্তী ধাপের জন্য এগিয়ে চলুন।
+                            </label>
+                        </div>
+
+                        <button class="btn bg-light-green text-white rounded-0 shadow mt-4" id="confirmOrder">
+                            নিশ্চিত করুন
+                        </button>
+
+                        <script asp-location="Footer">
+
+                            $('#confirmOrder').click(function (e) {
+                                if (!$('#confirmPerishableOrder').is(':checked')) {
+                                    e.preventDefault();
+                                    $('#confirmPerishableOrder').next().addClass('text-danger');
+                                    alert('বুঝতে পেরেছেন কিনা নিশ্চিত করুন');
+                                }
+                            });
+
+                            $('#confirmPerishableOrder').change(function () {
+                                if ($(this).is(':checked')) {
+                                    $(this).next().removeClass('text-danger').addClass('text-success');
+                                } else {
+                                    $(this).next().removeClass('text-sucess').addClass('text-danger');
+                                }
+                            })
+
+                        </script>
+
+                    </div>
+                </div>
+
+                <div class="cart-items-table card rounded-0 mt-3">
+                    <div class="card-body">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Name</th>
+                                    <th scope="col">Qty</th>
+                                    <th scope="col">Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Items)
+                                {
+                                    <tr>
+                                        <td> @item.ProductId </td>
+                                        <td> @item.ProductName </td>
+                                        <td> @item.Quantity </td>
+                                        <td> @item.UnitPrice </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

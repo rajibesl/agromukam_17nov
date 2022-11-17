@@ -1,0 +1,165 @@
+﻿@model CheckoutShippingAddressModel
+@{
+    Layout = "_ColumnsOne";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.Checkout").Text);
+    //page class
+    Html.AppendPageCssClassParts("html-checkout-page");
+    Html.AppendPageCssClassParts("html-shipping-address-page");
+}
+
+<style>
+    .address-grid .card {
+        min-height: 245px;
+    }
+</style>
+
+<div class="page checkout-page shipping-address-page mt-5">
+    @*@await Component.InvokeAsync("CheckoutProgress", new { step = CheckoutProgressStep.Address })*@
+    @await Html.PartialAsync("_Checkout.Navigation")
+    <div class="page-body checkout-data">
+
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-8">
+
+                    @* Address Grid *@
+                    @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.CheckoutShippingAddressTop })
+                    @if (Model.ExistingAddresses.Count > 0)
+                    {
+
+                        @* Add new address *@
+                        <div class="text-right disappear">
+                            <span class="cursor-pointer text-success show-new-address-form">
+                                <i class="fas fa-plus-circle text-success"></i>
+                                Add new address
+                            </span>
+                        </div>
+                        @*  *@
+
+                        <div class="address-grid disappear">
+                            @* Existing Address *@
+                            <div class="card border-0 shadow-sm mt-2">
+                                <div class="card-body">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">Name</th>
+                                                <th scope="col">Address</th>
+                                                <th scope="col">Region</th>
+                                                <th scope="col">Phone Number</th>
+                                                <th scope="col">#</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @if (Model.ExistingAddresses.Count > 0)
+                                            {
+                                                foreach (var address in Model.ExistingAddresses)
+                                                {
+                                                    <tr>
+                                                        <td> @address.FirstName &nbsp; @address.LastName </td>
+                                                        <td> @address.Address1 </td>
+                                                        <td> @address.Region - @address.City - @address.Area </td>
+                                                        <td> @address.PhoneNumber </td>
+                                                        <td>
+                                                            <input type="button" value="@T("Checkout.ShipToThisAddress")" class="btn btn-success rounded-0 shadow-sm btn-sm py-0" onclick="setLocation('@Url.RouteUrl("CheckoutSelectShippingAddress", new {addressid = address.Id})') " />
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <tr>
+                                                    <td colspan="5"> @T("Account.CustomerAddresses.NoAddresses") </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            @*  *@
+                        </div>
+                    }
+                    else
+                    {
+                        @* No existing address *@
+                        <div class="card border-0 shadow-sm mt-2 disappear">
+                            <div class="card-body text-center">
+
+                                <h4 class="text-muted my-3"> @T("Checkout.Address.Lookslikeyoudon'thaveanyaddress")</h4>
+
+                                <button class="btn btn-sm px-5 bg-light-green text-white rounded-0 shadow-sm show-new-address-form">
+                                    <i class="fas fa-plus-circle"></i>
+                                    @T("Checkout.Address.Addnewaddress")
+                                </button>
+
+                            </div>
+                        </div>
+                        @*  *@
+                    }
+                    @*  *@
+
+
+                    @* New address block *@
+                    <div class="add-new-address" id="newAddressForm" style="display: none;">
+                        <form asp-route="CheckoutShippingAddress" method="post">
+                            <div class="card border-0 shadow-sm mt-2">
+                                <div class="card-body">
+                                    <div asp-validation-summary="ModelOnly" class="message-error"></div>
+                                    <div class="d-flex flex-row">
+                                        <div class="d-flex flex-fill flex-column">
+                                        </div>
+                                        <div class="px-3">
+                                            @* Close Form *@
+                                            <div class="card border-0 shadow-lg cursor-pointer dismiss-address-form">
+                                                <div class="card-body px-2 py-1">
+                                                    <i class="fas fa-times fa-3x"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @{
+                                        var dataDictAddress = new ViewDataDictionary(ViewData);
+                                        dataDictAddress.TemplateInfo.HtmlFieldPrefix = "ShippingNewAddress";
+                                        dataDictAddress.Add("IsCheckoutAddress", "Yes");
+                                        @await Html.PartialAsync("_CreateOrUpdateAddress", Model.ShippingNewAddress, dataDictAddress)
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="card-footer text-center">
+                                <input type="submit" name="nextstep" value="@T("Checkout.NextButton")" class="btn bg-light-green text-white new-address-next-step-button btn-sm rounded-0 shadow-sm" />
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card border-0 rounded-0 shadow-sm">
+                        <div class="card-body">
+                            @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.OrderSummaryTotals })
+                            @await Component.InvokeAsync("OrderTotals", new { isEditable = false })
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script asp-location="Footer">
+    $(document).ready(function () {
+
+        $('.show-new-address-form').click(function () {
+            $('.disappear').hide();
+            $('#newAddressForm').show('slow');
+        });
+
+        $('.dismiss-address-form').click(function () {
+            $('#newAddressForm').hide();
+            $('.disappear').show();
+        });
+
+    });
+</script>

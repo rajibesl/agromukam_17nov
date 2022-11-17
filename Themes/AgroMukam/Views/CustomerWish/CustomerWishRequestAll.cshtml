@@ -1,0 +1,130 @@
+﻿@{
+    Layout = "_ColumnsOne";
+}
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+@inject Nop.Services.Customers.ICustomerService _customerService
+@inject Nop.Core.IWorkContext _workContext
+
+@{ 
+    var customer = await _workContext.GetCurrentCustomerAsync();
+    var isLoggedIn = await _customerService.IsRegisteredAsync(customer);
+    var isVendor = await _customerService.IsVendorAsync(customer);
+}
+
+@functions{
+    public string GetAntiXsrfRequestToken()
+    {
+        return Xsrf.GetAndStoreTokens(Context).RequestToken;
+    }
+}
+<style>
+    @@media all and (max-width: 1200px) {
+        .customer-wish-request-page {
+            margin-top: 25px;
+        }
+    }
+</style>
+
+<div class="page customer-wish-request-page pt-5">
+    <div class="title d-flex container">
+        <div class="col">
+            <h5 class="text-success"> Customer Wish Requests </h5>
+        </div>
+        @if (isLoggedIn && !isVendor)
+        {
+            <div class="col-auto">
+                <button class="btn btn-sm bg-light-green text-white shadow"
+                        onclick="setLocation(`@Url.RouteUrl("CustomerWishRequest")`)">
+                    <i class="fas fa-plus"></i>
+                    Create New Request
+                </button>
+            </div>
+        }
+
+    </div>
+
+    <div class="customer-wish-request mt-4 container">
+        <div class="row wish-request-page-top-ads mb-3" style="display: none;">
+            <img src="https://via.placeholder.com/728x90?text=Leaderboard+(728x90)+size+ads+here?" class="img-fluid m-auto">
+        </div>
+        <div class="row">
+            <div class="col-auto wish-request-page-side-ads">
+                <img src="https://via.placeholder.com/110x500?text=Ads+Space" class="img-fluid m-auto">
+            </div>
+            <div class="col request-list"></div>
+            <div class="col-8 request-details" style="display: none;">
+            </div>
+            <div class="col-auto wish-request-page-side-ads">
+                <img src="https://via.placeholder.com/110x500?text=Ads+Space" class="img-fluid m-auto">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script asp-location="Footer">
+
+    function showLoadingAnimation(element) {
+        const html = `<div class="d-flex justify-content-center align-items-center" style="height: 350px;"><div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div></div>`;
+        $(element).html(html);
+    }
+
+    async function fetchAndAppenView(url, element) {
+        return fetch(url)
+            .then(response => response.text())
+            .then(html => $(element).html(html))
+            .catch(e => console.log('err', e));
+    }
+
+    async function showRequstDetails(id) {
+        $('.wish-request-page-side-ads').hide();
+        if ($('.request-list').hasClass('col')) {
+            $('.request-list').removeClass('col').addClass('col-4');
+        }
+        $('.request-details, .wish-request-page-top-ads').show();
+
+        showLoadingAnimation('.request-details');
+
+        const requestDetailsUrl = '/CustomerWish/CustomerWishRequestDetails?wishRequestId=' + id;
+        await fetchAndAppenView(requestDetailsUrl, '.request-details');
+
+        const responseListUrl = '/CustomerWish/CustomerWishResponseList?wishRequestId=' + id;
+        await fetchAndAppenView(responseListUrl, '.response-list');
+    }
+
+    $(document).ready(async function () {
+
+        showLoadingAnimation('.request-list');
+
+        const requstListurl = '/CustomerWish/CustomerWishRequestList';
+        await fetchAndAppenView(requstListurl, '.request-list');
+
+        if (!!sessionStorage.getItem('cur-id')) {
+            const id = sessionStorage.getItem('cur-id');
+            $(`.request-list .card[data-id="${id}"]`)
+                .addClass('active');
+            showRequstDetails(id);
+        }
+
+        $(document).on('click', '.request-list .card', function () {
+            const id = $(this).data('id');
+            sessionStorage.setItem('cur-id', id);
+            $(`.request-list .card`).removeClass('active');
+            $(this).addClass('active');
+            showRequstDetails(id);
+        });
+
+        $(document).on('click', '.create-response-btn button', function () {
+            $('.create-response-btn').removeClass('d-flex').addClass('d-none');
+            $('.create-response-form').removeClass('d-none').addClass('d-flex');
+        })
+
+        $(document).on('click', '.create-response-form .bg-light', function () {
+            $('.create-response-form').removeClass('d-flex').addClass('d-none');
+            $('.create-response-btn').removeClass('d-none').addClass('d-flex');
+        });
+
+    });
+</script>
+
+
+

@@ -1,0 +1,70 @@
+﻿<section class="flash-sales padding-bottom padding-top">
+    <div class="card card-deal container-fluid">
+        <div class="col-heading content-body">
+            <header class="section-heading">
+                <h3 class="section-title">Flash Sale</h3>
+                <p>On Sale Now</p>
+            </header><!-- sect-heading -->
+            <div class="timer countdown-clock">
+                <div class="days"> <span class="num bg-deep-green clock-text">00</span> <small>Days</small></div>
+                <div class="hours"> <span class="num bg-deep-green clock-text">00</span> <small>Hours</small></div>
+                <div class="minutes"> <span class="num bg-deep-green clock-text">00</span> <small>Min</small></div>
+                <div class="seconds"> <span class="num bg-deep-green clock-text">00</span> <small>Sec</small></div>
+            </div>
+        </div> <!-- col.// -->
+        <div class="row no-gutters items-wrap">
+            <div class="col text-center pt-4" style="min-height: 200px;">
+                <span class="text-muted"> Getting flash sale products... </span>
+            </div>
+        </div>
+    </div>
+
+</section>
+<script src="/Themes/AgroMukam/Content/js/countdown-timer.js" asp-location="Footer"></script>
+<script asp-location="Footer">
+    $(document).ready(function () {
+        console.log('flash sale deals');
+
+        let discount;
+
+        function calculatePercentage(price, discount) {
+            const discountAmount = (price * discount) / 100;
+            return parseFloat(price - discountAmount).toFixed(2);
+        }
+
+        function appendProducts(collection) {
+            $('.flash-sales .items-wrap').html('');
+            collection = collection.slice(0, 5);
+            collection.forEach(function (item) {
+                const html = `<div class="col-md col-6">
+                    <figure class="card-product-grid card-sm h-100">
+                        <a href="#" class="img-wrap">
+                            <img src="${item.DefaultPictureModel.ImageUrl}" alt="" loading="lazy">
+                        </a>
+                        <div class="text-wrap p-3">
+                            <a href="#" class="title">${item.Name}</a>
+                            <span class="badge badge-danger"> -${discount.DiscountPercentage}% </span>
+                        </div>
+                    </figure>
+                </div>`;
+                $('.flash-sales .items-wrap').append(html);
+            });
+        }
+
+        $.get('/Product/FlashSaleProducts', function (data) {
+
+            if (data) {
+                discount = data.Discounts[0];
+                const deadline = new Date(discount.EndDateUtc);
+                initializeClock('.countdown-clock', deadline);
+                appendProducts(data.Products);
+            } else {
+                $('.flash-sales .items-wrap').html(`<div class="col">
+                    <h4> No Flash Sale deals found, check back soon!</h4>
+                </div>`);
+            }
+
+        });
+
+    });
+</script>

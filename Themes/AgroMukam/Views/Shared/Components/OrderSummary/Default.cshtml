@@ -1,0 +1,29 @@
+@model ShoppingCartModel
+@using Nop.Core
+@using Nop.Core.Domain.Orders
+@using Nop.Core.Domain.Tax
+@inject IWebHelper webHelper
+@inject IWorkContext workContext
+@inject OrderSettings orderSettings
+<div class="order-summary-content">
+    @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.OrderSummaryContentBefore })
+
+    <div class="container">
+        <div class="row">
+
+            <div class="col-lg-8">
+                @await Html.PartialAsync("_OrderReviewData", Model.OrderReviewData)
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 rounded-0 shadow-sm">
+                    <div class="card-body">
+                        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.OrderSummaryTotals })
+                        @await Component.InvokeAsync("OrderTotals", new { isEditable = false })
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.OrderSummaryContentAfter })
+</div>

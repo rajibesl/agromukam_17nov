@@ -1,0 +1,387 @@
+﻿@model ShoppingCartModel
+@using Nop.Core
+@using Nop.Core.Domain.Orders
+@using Nop.Core.Domain.Tax
+@using Nop.Services.Customers
+@using Nop.Services.Orders
+@using Nop.Web.Factories
+
+@inject IWebHelper webHelper
+@inject IWorkContext workContext
+@inject OrderSettings orderSettings
+@inject ICustomerService _customerService
+@inject IShoppingCartService _shoppingCartService
+@inject IShoppingCartModelFactory _shoppingCartModelFactory
+@inject ICheckoutModelFactory _checkoutModelFactory
+
+@{
+    var itemsPreSelected = 0;
+    if (Model.Items.Count > 0)
+    {
+        itemsPreSelected = Model.Items
+            .Where(x => x.ShoppingCartTypeId == 1)
+            .ToList().Count;
+    }
+
+    // Shipping Method
+    var customer = await workContext.GetCurrentCustomerAsync();
+    var cart = await _shoppingCartService.GetShoppingCartAsync(customer, ShoppingCartType.ShoppingCart, 0);
+    var orderTotalModel = await _shoppingCartModelFactory.PrepareOrderTotalsModelAsync(cart, true);
+    var shippingMethodModel = await _checkoutModelFactory.PrepareShippingMethodModelAsync(cart, await _customerService.GetCustomerShippingAddressAsync(customer));
+
+    // is advisor
+    var isAdvisor = await _customerService.IsInCustomerRoleAsync(customer, "Advisors");
+}
+
+<style>
+    .vendor-item-wrap .d-flex:not(:last-child) {
+        border-bottom: 1px solid #eee;
+        margin-bottom: 18px;
+    }
+
+    .qty-handlers .input-group-prepend,
+    .qty-handlers .input-group-append {
+        width: 25%;
+    }
+
+    .qty-handlers input {
+        width: 50%;
+        height: initial;
+    }
+
+    @@media all and (max-width: 576px) {
+        .qty-handlers .input-group-prepend,
+        .qty-handlers .input-group-append {
+            width: 100%;
+        }
+
+        .qty-handlers input {
+            width: 100%;
+        }
+
+        .item-price-wrap h3 {
+            padding-top: 35px;
+        }
+    }
+</style>
+
+<div class="container cart-item-container pt-4">
+
+    @await Html.PartialAsync("_Checkout.Navigation")
+
+    @if (Model.Warnings.Count > 0)
+    {
+        <div class="message-error border-danger m-3">
+            <ul>
+                @foreach (var warning in Model.Warnings)
+                {
+                    <li>@warning</li>
+                }
+            </ul>
+        </div>
+    }
+    @* Items Grid *@
+    @if (Model.Items.Count > 0)
+    {
+        <div class="row">
+            <div class="col-lg-8">
+
+                @* Preferred Delivery Option *@
+                <div class="card rounded-0 delivery-option mb-3">
+                    <div class="card-body p-2">
+                        <h6 class="font-weight-normal text-primary">@T("Cart.PreferredDeliveryOption")</h6>
+                        <div class="d-flex pr-md-4 mt-2">
+                            @if (shippingMethodModel.ShippingMethods.Any())
+                            {
+                                var shipping = shippingMethodModel.ShippingMethods[0];
+
+                                <div class="card border-success">
+                                    <div class="card-body bg-light p-2">
+                                        <div class="row no-gutters">
+
+                                            <div class="col-auto px-2">
+                                                <i class="fas fa-check-circle text-light-green" style="font-size: 18px;"></i>
+                                            </div>
+                                            <div class="col">
+                                                <div>
+                                                    <h5> @shipping.Fee </h5>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <p class="mb-0">
+                                                        AgroMukam Standard
+                                                    </p>
+                                                    <p>
+                                                        Estimated delivery in 2 days
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <h6> No Shipping Method Found! </h6>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card rounded-0">
+                    <div class="card-body p-2">
+                        <div class="d-flex">
+                            <div class="col-auto pl-2 pr-2">
+                                <input type="checkbox"
+                                       class="cart-item-select-all"
+                                       id="selectAllItem"
+                                       checked="@(Model.Items.Count == itemsPreSelected)" />
+                            </div>
+                            <div class="col-auto pl-0">
+                                <button class="btn btn-sm p-0 pl-2 pr-2">
+                                    <span class="d-none d-sm-inline-block">
+                                        @T("Cart.SelectAll")
+                                    </span>
+                                    @*All*@
+                                </button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-sm p-0 pl-2 pr-2 btn-warning delete-selected-items rounded-0 shadow-sm">
+                                    <i class="far fa-trash-alt mr-lg-2"></i>
+                                    <span class="d-none d-md-inline-block">
+                                        @T("Cart.DeleteSelected")
+                                    </span>
+                                </button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-sm p-0 pl-2 pr-2 btn-danger empty-cart rounded-0 shadow-sm">
+                                    <i class="fas fa-trash-alt mr-lg-2"></i>
+                                    <span class="d-none d-md-inline-block">
+                                        @T("Cart.EmptyCart")
+                                    </span>
+                                </button>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-sm p-0 pl-2 pr-2 btn-info refresh-cart rounded-0 shadow-sm">
+                                    <i class="fas fa-sync mr-lg-2"></i>
+                                    <span class="d-none d-md-inline-block">
+                                        @T("Cart.RefreshCart")
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @{
+                    var vendorWiseItems = Model.Items.GroupBy(x => x.VendorName).ToList();
+
+                    foreach (var vendorWiseItem in vendorWiseItems)
+                    {
+                        <div class="card rounded-0 mt-2">
+                            <div class="card-header text-lowercase font-weight-bolder">
+                                @vendorWiseItem.FirstOrDefault().VendorName
+                            </div>
+                            <div class="card-body pt-4 pb-0 pl-2 pr-2 vendor-item-wrap">
+                                @foreach (var item in vendorWiseItem.ToList())
+                                {
+                                    <div class="d-flex pb-3">
+
+                                        @* Item Checkbox *@
+                                        <div class="col-3 pl-2 pr-2">
+                                            <div class="d-flex">
+                                                <div class="col-auto pl-2 pr-2">
+                                                    <input type="checkbox"
+                                                           class="cart-item-cb"
+                                                           id="select-@(item.Id)"
+                                                           value="@(item.Id)"
+                                                           @(item.ShoppingCartTypeId == 1 ? "checked" : null) />
+                                                    <label for="select-@(item.Id)" class="td-title"></label>
+                                                </div>
+
+                                                <div class="col-auto pl-0 pr-0">
+                                                    <a href="@Url.RouteUrl("Product", new { SeName = item.ProductSeName })">
+                                                        <img alt="@item.Picture.AlternateText"
+                                                             src="@item.Picture.ImageUrl"
+                                                             title="@item.Picture.Title"
+                                                             style="width: 100%;" />
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        @* Item Name, Price, Qty *@
+                                        <div class="col-9 pl-2 pr-2">
+                                            <div class="row">
+                                                <div class="col-12 text-left col-md-5 pl-5 pr-2">
+                                                    @{
+                                                        var perishable = item.IsPerishable ? "Perishable" : "Non-Perishable";
+                                                        var colorClass = item.IsPerishable ? "bg-danger" : "bg-success";
+                                                        <span class="@colorClass text-white rounded-pill pl-2 pr-2 mb-1 product-perishable"
+                                                              style="font-size: 12px;">
+                                                            @perishable
+                                                        </span>
+                                                    }
+                                                    <h6 class="font-weight-light">
+                                                        <a href="@Url.RouteUrl("Product", new { SeName = item.ProductSeName })" class="product-name">
+                                                            @item.ProductName
+                                                        </a>
+                                                    </h6>
+                                                    @if (!String.IsNullOrEmpty(item.AttributeInfo))
+                                                    {
+                                                        <div class="attributes p-2 mt-2">
+                                                            @Html.Raw(item.AttributeInfo)
+                                                        </div>
+                                                    }
+                                                    <div class="item-action">
+                                                        <i class="fas fa-trash-alt cursor-pointer p-3"
+                                                           data-item-id="@item.Id"></i>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-6 col-md-3 text-center pt-2 pl-2 pr-2 item-price-wrap">
+
+                                                    @* Unit Price *@
+                                                    <h5 class="font-weight-normal text-greenish"> @item.UnitPrice </h5>
+
+                                                    @* Old Price *@
+                                                    @*@if (!String.IsNullOrEmpty(item.OldPrice))
+                                                        {
+                                                            <h5 class="text-muted text-line-through"> @item.OldPrice </h5>
+                                                        }*@
+
+                                                    @* Discount Percentage *@
+                                                    @if (!String.IsNullOrEmpty(item.Discount))
+                                                    {
+                                                        <h5> -@item.Discount </h5>
+                                                    }
+
+                                                </div>
+
+                                                <div class="col-6 col-md-4">
+                                                    <div class="input-group input-group-sm qty-handlers">
+                                                        <div class="input-group-prepend qty-decrease @(item.Quantity == 1 ? "is-disabled" : null)">
+                                                            <i class="fas fa-minus cursor-pointer d-block w-100"
+                                                               style="text-align: center; line-height: 35px;"></i>
+                                                        </div>
+                                                        <input name="itemquantity@(item.Id)"
+                                                               id="itemquantity@(item.Id)"
+                                                               type="text"
+                                                               value="@(item.Quantity)"
+                                                               data-qty="@(item.Quantity)"
+                                                               class="qty-input text-center p-2 form-control form-control-sm" />
+                                                        <div class="input-group-append qty-increase">
+                                                            <i class="fas fa-plus cursor-pointer d-block w-100"
+                                                               style="text-align: center; line-height: 35px;"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+
+
+
+            </div>
+            <div class="col-lg-4">
+                <div class="card border-0 rounded-0 shadow-sm">
+                    <div class="card-body">
+                        <h4 class="text-success"> @T("ShoppingCart.OrderSummary") </h4>
+
+                        @{
+                            var orderSubTotal = !string.IsNullOrEmpty(orderTotalModel.SubTotal)
+                                ? Decimal.Parse(orderTotalModel.SubTotal.Replace('৳', ' ').Replace('$', ' '))
+                                : 0;
+
+                            var shippingCost = shippingMethodModel.ShippingMethods.Any()
+                                ? Decimal.Parse(shippingMethodModel.ShippingMethods[0].Fee.Replace('৳', ' ').Replace('$', ' '))
+                                : 0;
+
+                            var orderTotal = orderSubTotal + shippingCost;
+
+                            <div class="ot-wrap mt-3">
+                                <div class="row">
+                                    <div class="col-7 font-weight-normal">
+                                        @T("ShoppingCart.Totals.SubTotal") (@itemsPreSelected):
+                                    </div>
+                                    <div class="col-5 font-weight-normal text-right">
+                                        @orderSubTotal ৳
+                                    </div>
+                                </div>
+
+                                @if (!String.IsNullOrEmpty(orderTotalModel.SubTotalDiscount))
+                                {
+                                    <div class="row mt-2">
+                                        <div class="col-7 font-weight-normal">
+                                            @T("ShoppingCart.Totals.SubTotalDiscount"):
+                                        </div>
+                                        <div class="col-5 font-weight-normal text-right">
+                                            @orderTotalModel.SubTotalDiscount
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="row mt-2">
+                                    <div class="col-7 font-weight-normal">
+                                        @T("ShoppingCart.Totals.Shipping"):
+                                    </div>
+                                    <div class="col-5 font-weight-normal text-right">
+                                        @shippingCost ৳
+                                    </div>
+                                </div>
+
+                                <div class="row mt-3 mb-3">
+                                    <div class="col-12">
+                                        <hr style="border: none; height: 1px; background: #eee;" />
+                                    </div>
+                                </div>
+
+                                <div class="row mt-2">
+                                    <div class="col-7 font-weight-bold">
+                                        @T("ShoppingCart.Totals.OrderTotal"):
+                                    </div>
+                                    <div class="col-5 font-weight-bold text-right">
+                                        <span>
+                                            @orderTotal ৳
+                                        </span>
+                                    </div>
+                                </div>
+
+                            </div>
+                        }
+
+                        @if (isAdvisor)
+                        {
+                            <a href="@Url.RouteUrl("Prescribe")"
+                               id="checkout"
+                               class="btn btn-success bg-greenish btn-block border-0 rounded-0 shadow-sm mt-3">
+                                Proceed to Prescribe
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="@Url.RouteUrl("CheckoutOnePage")"
+                               id="checkout"
+                               class="btn btn-success bg-greenish btn-block border-0 rounded-0 shadow-sm mt-3">
+                                @T("Checkout.Button")
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        var noContent = await Html.PartialAsync("_Cart.Empty");
+        @noContent
+    }
+
+</div>
+

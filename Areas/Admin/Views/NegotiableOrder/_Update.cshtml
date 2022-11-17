@@ -1,0 +1,387 @@
+﻿@model NegotiableOrderItemDetailsModel
+@using Nop.Core.Domain.Customers
+@using Nop.Core.Domain.Orders
+@using Nop.Core.Domain.Payments
+@using Nop.Core.Domain.Shipping
+@using Nop.Services
+@using Microsoft.AspNetCore.Mvc.Rendering
+@inject Nop.Services.Customers.ICustomerService _customerService
+@inject Nop.Services.Common.IGenericAttributeService genericAttributeService
+
+<div asp-validation-summary="All"></div>
+<input asp-for="Id" type="hidden" />
+<input asp-for="OrderItemId" type="hidden" />
+
+<div class="content">
+    <div class="form-horizontal">
+
+        <div class="panel panel-default">
+            <div class="panel-body">
+
+                @*  *@
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-info"></i> Order Info
+                    </div>
+                    <div class="panel-body">
+
+                        <div class="form-group mt-3">
+                            <div class="col-sm-3">
+                                <div class="label-wrapper">
+                                    <label class="control-label" for="OrderId">Order Id</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-9">
+                                <div class="form-text-row">@Model.OrderId</div>
+                                <input type="hidden" asp-for="OrderId" />
+                            </div>
+                        </div>
+                        @*  *@
+                        <div class="form-group mt-3">
+                            <div class="col-sm-3">
+                                <div class="label-wrapper">
+                                    <label class="control-label" for="Product">Product</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-9">
+                                <div class="form-text-row">@Model.Product.Name</div>
+                            </div>
+                        </div>
+                        @*  *@
+                        <div class="form-group mt-3">
+                            <div class="col-sm-3">
+                                <div class="label-wrapper">
+                                    <label class="control-label" for="Customer">Customer</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-9">
+                                <div class="form-text-row">@Model.Customer.Username</div>
+                            </div>
+                        </div>
+                        @*  *@
+                        <div class="form-group mt-3">
+                            <div class="col-sm-3">
+                                <div class="label-wrapper">
+                                    <label class="control-label" for="CreatedOn">Created On</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-9">
+                                <div class="form-text-row">@Model.CreatedOnUtc</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                @*  *@
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-address-card-o"></i> Contact Info
+                    </div>
+                    <div class="panel-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="panel panel-warning">
+                                    <div class="panel-heading">Vendor</div>
+                                    <div class="panel-body">
+                                        <div class="form-group mt-3">
+                                            <div class="col-sm-3">
+                                                <div class="label-wrapper">
+                                                    <label class="control-label" for="VendorName">Name</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-9">
+                                                @*<div class="form-text-row">@Model.Vendor.SystemName</div>*@
+                                                <div class="form-text-row">@Model.Vendor.Name</div>
+                                            </div>
+                                        </div>
+                                        @*  *@
+                                        <div class="form-group mt-3">
+                                            <div class="col-sm-3">
+                                                <div class="label-wrapper">
+                                                    <label class="control-label" for="VendorEmail">Phone</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-9">
+                                                <div class="form-text-row">
+                                                    @{
+                                                        var vendorPhone = string.Empty;
+                                                        var cust = await _customerService.GetCustomerByVendorIdAsync(Model.Vendor.Id);
+                                                        if (cust != null)
+                                                            vendorPhone = cust.Username;
+
+                                                        @vendorPhone
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="panel panel-info">
+                                    <div class="panel-heading">Customer</div>
+                                    <div class="panel-body">
+                                        <div class="form-group mt-3">
+                                            <div class="col-sm-3">
+                                                <div class="label-wrapper">
+                                                    <label class="control-label" for="CustomerName">Name</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-9">
+                                                <div class="form-text-row">
+                                                    @{
+                                                        var firstName = genericAttributeService.GetAttributeAsync<string>(Model.Customer, NopCustomerDefaults.FirstNameAttribute);
+                                                        var lastName = genericAttributeService.GetAttributeAsync<string>(Model.Customer, NopCustomerDefaults.LastNameAttribute);
+                                                        var name = firstName + " " + lastName;
+
+                                                        @name
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @*  *@
+                                        <div class="form-group mt-3">
+                                            <div class="col-sm-3">
+                                                <div class="label-wrapper">
+                                                    <label class="control-label" for="CustomerPhone">Phone</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-sm-9">
+                                                <div class="form-text-row">@Model.Customer.Username</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @*  *@
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-cubes"></i> Shipment
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <div class="col-sm-3">
+                                <div class="label-wrapper">
+                                    <label class="control-label">Shipping Method</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-9">
+                                <select class="form-control"
+                                        style="max-width: 200px;">
+                                    <option>Door to Door</option>
+                                    <option>Courier</option>
+                                    <option>Pickup from Store</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-3">
+                                <div class="label-wrapper">
+                                    <label class="control-label">Shipping Cost</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-9">
+                                <input type="number"
+                                       class="form-control"
+                                       asp-for="ShippingCost"
+                                       style="max-width: 200px;" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6" style="margin-top: 20px;">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th colspan="2">Delivery Address</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Contact Name</td>
+                                            <td> @(Model.ShippingAddress.FirstName + " " + @Model.ShippingAddress.FirstName) </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Email</td>
+                                            <td> @Model.ShippingAddress.Email </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Phone</td>
+                                            <td> @Model.ShippingAddress.PhoneNumber </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Region</td>
+                                            <td> @Model.ShippingAddress.RegionId </td>
+                                        </tr>
+                                        <tr>
+                                            <td>City</td>
+                                            <td> @Model.ShippingAddress.CityId </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Area</td>
+                                            <td> @Model.ShippingAddress.AreaId </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Address</td>
+                                            <td> @Model.ShippingAddress.Address1 </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2">
+                                                <button class="btn btn-default btn-sm"> <i class="fa fa-pencil"></i> Edit </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="" style="margin-top: 165px; text-align: center;">
+                                    <button type="button" class="btn btn-default"> <i class="fa fa-plus"></i> Create New Address </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @*  *@
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-money"></i> Cost
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <div class="col-sm-3">
+                                <div class="label-wrapper">
+                                    <label class="control-label">Quantity</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-9">
+                                <div class="form-text-row">@Model.Qty</div>
+                            </div>
+                        </div>
+                        @*  *@
+                        <div class="form-group">
+                            <div class="col-sm-3">
+                                <div class="label-wrapper">
+                                    <label class="control-label">Unit Price</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-9">
+                                <div class="form-text-row">@Model.UnitPrice.ToString("#0.00")</div>
+                            </div>
+                        </div>
+                        @*  *@
+                        <div class="form-group">
+                            <div class="col-sm-3">
+                                <div class="label-wrapper">
+                                    <label class="control-label">Sub Total</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-9">
+                                <div class="form-text-row">@Model.Price.ToString("#0.00") (excl. shipping cost)</div>
+                            </div>
+                        </div>
+                        @*  *@
+                        <div class="form-group">
+                            <div class="col-sm-3">
+                                <div class="label-wrapper">
+                                    <label class="control-label">Shipping Cost</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-9">
+                                <div class="form-text-row">
+                                    <span class="shipping-cost"> 0.00 </span>
+                                </div>
+                            </div>
+                        </div>
+                        @*  *@
+                        <div class="form-group">
+                            <div class="col-sm-3">
+                                <div class="label-wrapper">
+                                    <label class="control-label">Total</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-9">
+                                <div class="form-text-row">
+                                    <span class="total-cost"> 0.00 </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @*  *@
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <i class="fa fa-file-text-o"></i> Status
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <div class="col-sm-3">
+                                <div class="label-wrapper">
+                                    <label class="control-label">Order Status</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-9">
+                                <nop-select asp-for="OrderStatusId" asp-items="@(await((OrderStatus) Model.OrderStatusId).ToSelectListAsync())" />
+                            </div>
+                        </div>
+                        @*  *@
+                        <div class="form-group">
+                            <div class="col-sm-3">
+                                <div class="label-wrapper">
+                                    <label class="control-label">Payment Status</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-9">
+                                <nop-select asp-for="PaymentStatusId" asp-items="@(await((PaymentStatus) Model.PaymentStatusId).ToSelectListAsync())" />
+                            </div>
+                        </div>
+                        @*  *@
+                        <div class="form-group">
+                            <div class="col-sm-3">
+                                <div class="label-wrapper">
+                                    <label class="control-label">Shipping Status</label>
+                                </div>
+                            </div>
+                            <div class="col-sm-9">
+                                <nop-select asp-for="ShippingStatusId" asp-items="@(await((ShippingStatus) Model.ShippingStatusId).ToSelectListAsync())" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+
+    function calculateTotalCost() {
+        const price = parseFloat(`@Model.Price`);
+        const shippingCost = parseFloat($('#ShippingCost').val());
+        const total = price + shippingCost;
+
+        $('.shipping-cost').text(shippingCost.toFixed(2));
+        $('.total-cost').text(total.toFixed(2));
+    }
+
+    $(document).ready(function () {
+
+        console.log(`@Json.Serialize(Model.ShippingAddress)`);
+
+        calculateTotalCost();
+
+        $('#ShippingCost').keyup(function () {
+            calculateTotalCost();
+        });
+
+    });
+
+</script>

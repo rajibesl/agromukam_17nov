@@ -1,0 +1,57 @@
+﻿@using Nop.Services.Catalog
+@inject ICategoryService _categoryService
+@{
+    var rootCategories = (await _categoryService.GetAllCategoriesByParentCategoryIdAsync(0))
+        .Where(c => !c.Name.Contains("Courier") && !c.Name.Contains("Service"))
+        .OrderBy(x => x.DisplayOrder)
+        .Select(x =>
+        {
+            return new SelectListItem
+            {
+                Text = x.Name,
+                Value = x.Id.ToString()
+            };
+        })
+        .ToList();
+}
+
+
+<form id="CustomSearchForm" asp-controller="Catalog" asp-action="Search" method="post" class="d-none d-lg-block">
+    <div class="smart-search bg-light-green">
+        <div class="container-fluid pt-2 pb-2">
+            <div class="row">
+                <div class="col-3 col-lg-auto offset-lg-1 pt-2 text-right text-lg-left">
+                    <h6 class="text-white">@T("Toplinks.Iamlookingfor")</h6>
+                </div>
+                <div class="col-9 col-lg px-1 py-1">
+                    <select class="custom-select rounded-0">
+                        <option selected>@T("Toplinks.Iamlookingfor.Offers")</option>
+                        <option value="1">@T("Toplinks.Iamlookingfor.Discounts")</option>
+                        <option value="2">@T("Toplinks.Iamlookingfor.MonthEndOffer")</option>
+                        <option value="3">@T("Toplinks.Iamlookingfor.FreeDelivery")</option>
+                        <option value="4">@T("Toplinks.Iamlookingfor.Campaigns")</option>
+                        <option value="5">@T("Toplinks.Iamlookingfor.PromotionalOffers")</option>
+                    </select>
+                </div>
+                <div class="col-3 col-lg-auto pt-2 text-right text-lg-left">
+                    <h6 class="text-white">in</h6>
+                </div>
+                <div class="col-9 col-lg px-1 py-1">
+                    <select name="cid" id="cid" class="custom-select rounded-0">
+                        @foreach (var category in rootCategories)
+                        {
+                            <option value="@category.Value">@category.Text</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-12 col-lg-auto py-1 text-center mr">
+                    <button class="btn bg-light-green text-white pl-5 pr-5 mt-2 mt-lg-0 rounded-0 shadow-sm">
+                        <i class="fas fa-search"></i>
+                        Search
+                    </button>
+                </div>
+                <div class="d-none d-lg-block col-lg-1"></div>
+            </div>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,49 @@
+﻿@*
+    This is a demo partial view as we don't have product-wise-bestselling-products feature
+
+    product-wise-bestselling-products = grid of best selling products shown on product details page
+                                        need an algorithm to retrieve best selling products related to the product showing details
+
+    ++  this is bad bad practice to do it all in here. 
+        should create a component or dedicate controller method to take care of logic part
+*@
+
+@model int
+
+@inject Nop.Services.Orders.IOrderReportService orderReportService
+@inject Nop.Web.Factories.IProductModelFactory productModelFactory
+@inject Nop.Services.Catalog.IProductService productService
+
+@{ 
+    var productIds = await orderReportService.GetAlsoPurchasedProductsIdsAsync(0, Model);
+    var products = await productService.GetProductsByIdsAsync(productIds);
+
+    // fall back, let's show at least some products, just in case
+    if (!products.Any())
+        products = await productService.GetAllProductsDisplayedOnHomepageAsync();
+
+    var viewModel = (await productModelFactory
+        .PrepareProductOverviewModelsAsync(products.Take(3).ToList(), true, true)).ToList();
+}
+
+
+<div class="card rounded-0 border-0 product-details-best-sellers">
+    <div class="card-header border-0 bg-light">
+        <h6>
+            <i class="fas fa-thumbtack text-light-green mr-2"></i>
+            Best Sellers
+        </h6>
+    </div>
+    <div class="card-body p-3">
+        <div class="item-grid">
+            <div class="row">
+                @foreach (var item in viewModel)
+                {
+                    <div class="item-box add-border col-6 col-sm-4 col-md-3 col-lg-12 mb-2 px-1 px-lg-2">
+                        @await Html.PartialAsync("_ProductBox", item)
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,165 @@
+﻿@model string
+@using Nop.Core.Domain.Customers
+@inject Nop.Core.IWorkContext _workContext
+@inject Nop.Services.Common.IGenericAttributeService _genericAttributeService
+@inject Nop.Services.Customers.ICustomerService _customerService
+@{
+    var customer = await _workContext.GetCurrentCustomerAsync();
+    var customerName = await _genericAttributeService
+        .GetAttributeAsync<string>(customer, NopCustomerDefaults.FirstNameAttribute);
+    var isVendor = await _customerService.IsVendorAsync(customer);
+}
+
+<style>
+    .customer-sidenav a {
+        color: rgba(0, 0, 0, .6) !important;
+    }
+
+        .customer-sidenav a:hover,
+        .customer-sidenav a.active {
+            color: #69A41F !important;
+        }
+
+    .customer-sidenav li {
+        list-style-type: none;
+    }
+</style>
+
+<div class="customer-sidenav">
+
+    <div class="greet d-flex flex-row">
+        <div class="d-flex rounded bg-white shadow-sm p-1 justify-content-center align-items-center" style="border: 2px solid #69A41F; width: 40px;">
+            <img src="data:image/png;base64,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" class="img-fluid">
+        </div>
+        <div class="d-flex justify-content-center align-items-center pl-2">
+            <h6 class="font-weight-bold text-light-green">@T("MyAccount.Navigation.Hi"), @customerName</h6>
+        </div>
+    </div>
+
+    <h6 class="mt-3">
+        <a href="@Url.RouteUrl("CustomerInfoWelcome")" class="welcome d-flex flex-row align-items-center">
+            <span class="d-flex text-center justify-content-center" style="width: 25px;">
+                <i class="fas fa-user"></i>
+            </span>
+            <span class="d-flex flex-fill">@T("MyAccount.Navigation.ManageMyAccount")</span>
+        </a>
+    </h6>
+    <ul class="pl-3 pt-1">
+        <li>
+            <a href="@Url.RouteUrl("CustomerInfo")" class="my-profile d-flex flex-row align-items-center">
+                <span class="d-flex text-center justify-content-center" style="width: 25px;">
+                    <i class="fas fa-id-badge d-flex"></i>
+                </span>
+                <span class="d-flex flex-fill">@T("MyAccount.Navigation.MyProfile")</span>
+            </a>
+        </li>
+        @if (isVendor)
+        {
+            <li>
+                <a href="@Url.RouteUrl("CustomerVendorInfo")" class="vendor-profile d-flex flex-row align-items-center">
+                    <span class="d-flex text-center justify-content-center" style="width: 25px;">
+                        <i class="fas fa-store d-flex"></i>
+                    </span>                    
+                    <span class="d-flex flex-fill">@T("AgroCustomer.VendorProfile")</span>
+                </a>
+            </li>
+        }
+        <li>
+            <a href="@Url.RouteUrl("CustomerAddresses")" class="address-book d-flex flex-row align-items-center">
+                <span class="d-flex text-center justify-content-center" style="width: 25px;">
+                        <i class="fas fa-address-book d-flex"></i>
+                    </span>
+                <span class="d-flex flex-fill">@T("MyAccount.Navigation.AddressBook")</span>
+            </a>
+        </li>
+        <li>
+            <a href="@Url.RouteUrl("CustomerPaymentOptions")" class="payment-options d-flex flex-row align-items-center">
+                <span class="d-flex text-center justify-content-center" style="width: 25px;">
+                        <i class="fas fa-credit-card d-flex"></i>
+                    </span> 
+                <span class="d-flex flex-fill">@T("MyAccount.Navigation.CustomerPaymentOptions")</span> 
+            </a>
+        </li>
+        <li>
+            <a href="@Url.RouteUrl("CustomerChangePassword")" class="change-password d-flex flex-row align-items-center">
+                <span class="d-flex text-center justify-content-center" style="width: 25px;">
+                        <i class="fas fa-unlock-alt d-flex"></i>
+                    </span> 
+                <span class="d-flex flex-fill">@T("AgroCustomer.PasswordRecovery.ChangePassword")</span> 
+            </a>
+        </li>
+    </ul>
+
+    <h6 class="mt-3">
+        <a href="@Url.RouteUrl("CustomerOrders")" class="my-orders d-flex flex-row align-items-center">
+            <span class="d-flex text-center justify-content-center" style="width: 25px;">
+                        <i class="fas fa-folder-open d-flex"></i>
+                    </span> 
+            <span class="d-flex flex-fill">@T("MyAccount.Navigation.MyOrders")</span> 
+        </a>
+    </h6>
+
+    <h6 class="mt-3">
+        <a href="@Url.RouteUrl("CustomerProductReviews")" class="my-reviews d-flex flex-row align-items-center">
+            <span class="d-flex text-center justify-content-center" style="width: 25px;">
+                        <i class="fas fa-star d-flex"></i>
+                    </span> 
+            <span class="d-flex flex-fill">@T("MyAccount.Navigation.MyReviews")</span> 
+        </a>
+    </h6>
+
+    <h6 class="mt-3">
+        <a href="@Url.RouteUrl("WishList")" class="my-wishlist d-flex flex-row align-items-center">
+            <span class="d-flex text-center justify-content-center" style="width: 25px;">
+                        <i class="fas fa-heart d-flex"></i>
+                    </span> 
+            <span class="d-flex flex-fill">@T("MyAccount.Navigation.MyWishlist")</span> 
+        </a>
+    </h6>
+
+    <h6 class="mt-3">
+        <a href="@Url.RouteUrl("CompareProducts")" class="compare-products d-flex flex-row align-items-center">
+            <span class="d-flex text-center justify-content-center" style="width: 25px;">
+                        <i class="fas fa-greater-than-equal d-flex"></i>
+                    </span> 
+            <span class="d-flex flex-fill">@T("MyAccount.Navigation.MyProductCompares")</span> 
+        </a>
+    </h6>
+
+    <h6 class="mt-3">
+        <a href="@Url.RouteUrl("Prescriptions")" class="prescriptions d-flex flex-row align-items-center">
+            <span class="d-flex text-center justify-content-center" style="width: 25px;">
+                        <i class="fas fa-file-prescription d-flex"></i>
+                    </span> 
+            <span class="d-flex flex-fill">@T("MyAccount.Navigation.Prescriptions")</span> 
+        </a>
+    </h6>
+
+    <h6 class="mt-3">
+        <a href="@Url.RouteUrl("Nop.Plugin.Misc.AgroReferAndEarn.ReferAndEarn")" class="refer-and-earn d-flex flex-row align-items-center">
+            <span class="d-flex text-center justify-content-center" style="width: 25px;">
+                <i class="fas fa-retweet d-flex"></i>
+                    </span> 
+            <span class="d-flex flex-fill">@T("MyAccount.Navigation.ReferAndEarn")</span>
+        </a>
+    </h6>
+    <ul class="pl-3 pt-1">
+        <li>
+            <a href="@Url.RouteUrl("CustomerRewardPoints")" class="reward-points d-flex flex-row align-items-center">
+                <span class="d-flex text-center justify-content-center" style="width: 25px;">
+                        <i class="fas fa-coins d-flex"></i>
+                    </span> 
+                <span class="d-flex flex-fill">@T("MyAccount.Navigation.MyRewardPoints")</span> 
+            </a>
+        </li>
+    </ul>
+
+</div>
+
+<script asp-location="Footer">
+    $(document).ready(function () {
+        $('.side-2 > .card').removeClass('card');
+        const selector = '.' + `@Model`;
+        $(selector).addClass('active');
+    });
+</script>

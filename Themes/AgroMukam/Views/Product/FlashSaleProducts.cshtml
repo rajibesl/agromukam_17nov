@@ -1,0 +1,169 @@
+﻿@model FlashSaleProductModel
+@using Nop.Core.Domain.Seo
+@using System.Globalization;
+@inject Nop.Core.IWebHelper webHelper
+@inject SeoSettings seoSettings
+@{
+    Layout = "_ColumnsOne";
+
+    //page class
+    Html.AppendPageCssClassParts("html-flash-sale-page");
+}
+
+@{
+    var discount = Model.Discounts[0];
+    var discountDate = discount.EndDateUtc.ToString();
+    //DateTime formatted = DateTime.ParseExact(discountDate, @"d/M/yyyy h:mm:ss tt", CultureInfo.CreateSpecificCulture("en-us"));
+
+    var currentCulture = CultureInfo.CurrentCulture.ToString();
+
+    var formatted = currentCulture != "en-US" ? DateTime.Parse(discountDate, CultureInfo.CreateSpecificCulture("bn-BD")).ToString(CultureInfo.GetCultureInfo("en-US")) : discountDate;
+}
+
+<div class="page vendor-store-page container-fluid">
+    <div class="vendor-page-title">
+        <div class="title-picture-wrapper">
+            <div class="vendor-picture-wrapper" style="height: 220px;">
+                <img src="/Themes/Venture/Content/img/flash-sale-banner.jpg" alt="" title="" style="height: 100%; width: 100%;" />
+            </div>
+            <div class="flash-sale-timer">
+                <div id="clockdiv">
+                    <div>
+                        <span class="days"></span>
+                        <div class="smalltext">Days</div>
+                    </div>
+                    <div>
+                        <span class="hours"></span>
+                        <div class="smalltext">Hours</div>
+                    </div>
+                    <div>
+                        <span class="minutes"></span>
+                        <div class="smalltext">Minutes</div>
+                    </div>
+                    <div>
+                        <span class="seconds"></span>
+                        <div class="smalltext">Seconds</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="page-body mt-3">
+
+        @*featured products*@
+        @if (Model.Products.Count > 0)
+        {
+            <div class="product-grid featured-product-grid">
+                <div class="item-grid row">
+                    @foreach (var item in Model.Products)
+                    {
+                        <div class="item-box add-border col-12 col-sm-6 col-md-3 col-lg-2 px-1 py-1">
+                            @await Html.PartialAsync("_ProductBox", item)
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <h3>No product on Flash Sale. Check back later...</h3>
+        }
+
+        <script asp-location="Footer">
+
+        function getTimeRemaining(endtime) {
+          var t = Date.parse(endtime) - Date.parse(new Date());
+          var seconds = Math.floor((t / 1000) % 60);
+          var minutes = Math.floor((t / 1000 / 60) % 60);
+          var hours = Math.floor((t / (1000 * 60 * 60)) % 24);
+          var days = Math.floor(t / (1000 * 60 * 60 * 24));
+          return {
+            'total': t,
+            'days': days,
+            'hours': hours,
+            'minutes': minutes,
+            'seconds': seconds
+          };
+        }
+
+        function initializeClock(id, endtime) {
+          var clock = document.getElementById(id);
+          var daysSpan = clock.querySelector('.days');
+          var hoursSpan = clock.querySelector('.hours');
+          var minutesSpan = clock.querySelector('.minutes');
+          var secondsSpan = clock.querySelector('.seconds');
+
+          function updateClock() {
+            var t = getTimeRemaining(endtime);
+
+            daysSpan.innerHTML = t.days;
+            hoursSpan.innerHTML = ('0' + t.hours).slice(-2);
+            minutesSpan.innerHTML = ('0' + t.minutes).slice(-2);
+            secondsSpan.innerHTML = ('0' + t.seconds).slice(-2);
+
+            if (t.total <= 0) {
+              clearInterval(timeinterval);
+            }
+          }
+
+          updateClock();
+          var timeinterval = setInterval(updateClock, 1000);
+            }
+
+            $(document).ready(function () {
+                console.log('discountDate: ', `@discountDate`);
+                console.log('culture: ', `@currentCulture`);
+                console.log('formatted: ', `@formatted`);
+                var deadline = new Date(`@formatted`);
+                initializeClock('clockdiv', deadline);
+            });
+        </script>
+
+        <style>
+            .flash-sale-timer {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                padding: 50px 15px;
+            }
+
+            .fsale {
+                z-index: 1 !important;
+            }
+
+                .fsale:before {
+                    z-index: -1 !important;
+                }
+
+            #clockdiv {
+                color: #fff;
+                display: block;
+                font-weight: 100;
+                text-align: center;
+                font-size: 30px;
+                margin: auto;
+            }
+
+                #clockdiv > div {
+                    padding: 10px;
+                    border-radius: 3px;
+                    background: rgba(0, 0, 0, .3);
+                    display: inline-block;
+                }
+
+                #clockdiv div > span {
+                    padding: 15px;
+                    border-radius: 3px;
+                    background: rgba(73, 132, 4, .4);
+                    display: inline-block;
+                }
+
+            .smalltext {
+                padding-top: 5px;
+                font-size: 16px;
+            }
+        </style>
+    </div>
+</div>

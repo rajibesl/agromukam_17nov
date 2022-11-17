@@ -1,0 +1,46 @@
+﻿@model VendorAttributeModel
+@using Nop.Services.Vendors
+@{
+    var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{Model.Id}";
+    var textPrompt = Model.Name;
+    var isRequired = Convert.ToBoolean(this.ViewData["isRequired"]);
+    var hintText = (string)this.ViewData["hintText"];
+}
+
+<label for="ProfileVerificationFile">
+    @textPrompt:
+    @if (isRequired)
+    {
+        <span class="text-danger ml-2">*</span>
+    }
+</label>
+<div class="input-group">
+    <div class="custom-file">
+        <input 
+               id="@(controlId)"
+               name="@(controlId)"
+               type="hidden"
+               class="not-required" />
+        <input type="file"
+               class="custom-file-input @(isRequired ? "" : "not-required")"
+               id="@(controlId)_uploader"
+               name="@(controlId)_uploader"
+               data-ref="@(controlId)"
+               data-val="true"
+               data-val-required="Please upload file"
+               onchange="loadFile(event, '@(controlId)_uploader_Output')">
+        <label class="custom-file-label"
+               for="ProfileVerificationFile">@T("VendorRegistration.ChooseFile")</label>
+            <span class="field-validation-valid custom-file-upload-required"
+                  data-valmsg-for="@(controlId)_uploader"
+                  data-valmsg-replace="true"></span>
+    </div>
+</div>
+@if(!string.IsNullOrEmpty(hintText)) {
+    <small class="form-text text-muted"> @hintText </small>
+}
+<div class="input-group custom-file-preview mt-2 mb-3 justify-content-center align-items-center"
+        id="@(controlId)_uploader_Output"
+        style="display: none; border: 1px dotted green; height: 100px;">
+    <img class="img-fluid" style="height: 90px;" />
+</div>

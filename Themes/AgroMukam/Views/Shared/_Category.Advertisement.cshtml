@@ -1,0 +1,64 @@
+﻿@model int
+@*@using Nop.Services.Advertisements
+    @using Nop.Services.Media
+    @inject IAdvertisementService _advertisementService
+    @inject IPictureService _pictureService
+
+    @{
+        var advertisements = _advertisementService.GetAllAdvertisements(null, Model, 50, 0, null, null, 0, 6);
+        var ads = advertisements.Where(x =>
+        {
+            return x.EndDateUtc > DateTime.Now;
+        }).Take(10).ToList();
+    }
+
+    @if (ads.Count > 0)
+    {
+        <div class="row ads-row">
+            @foreach (var ad in ads)
+            {
+                var imgUrl = _pictureService.GetPictureUrl(ad.PictureId, 250);
+
+                <div class="col-6">
+                    @if (!String.IsNullOrEmpty(ad.HyperLink))
+                    {
+                        <a href="@ad.HyperLink" target="_blank">
+                            <img src="@imgUrl" class="img-fluid" alt="@ad.Name" loading="lazy">
+                        </a>
+                    }
+                    else
+                    {
+                        <img src="@imgUrl" class="img-fluid" alt="@ad.Name" loading="lazy">
+                    }
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="row noads-row">
+            <div class="col-12 pt-3">
+                <div class="w-100 text-center pt-5 pb-5 pl-2 pr-2 border border-success">
+                    <h2 class="text-primary">Place Your Ad</h2>
+                    <h1 class="text-danger mt-2">HERE</h1>
+
+                    <button class="btn btn-success btn-block mt-3">
+                        Click to know how
+                    </button>
+                </div>
+            </div>
+        </div>
+    }*@
+
+<div class="row noads-row">
+    <div class="col-12 pt-3">
+        <div class="w-100 text-center pt-5 pb-5 pl-2 pr-2 border border-success">
+            <h2 class="text-primary">Place Your Ad</h2>
+            <h1 class="text-danger mt-2">HERE</h1>
+
+            <button class="btn btn-success btn-block mt-3">
+                Click to know how
+            </button>
+        </div>
+    </div>
+</div>

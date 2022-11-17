@@ -1,0 +1,151 @@
+﻿<style>
+    .hr-text {
+        line-height: 1em;
+        position: relative;
+        outline: 0;
+        border: 0;
+        color: black;
+        text-align: center;
+        height: 1.5em;
+        opacity: 0.5;
+    }
+
+        .hr-text:before {
+            content: "";
+            background: linear-gradient(to right, transparent, #818078, transparent);
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 1px;
+        }
+
+        .hr-text:after {
+            content: attr(data-content);
+            position: relative;
+            display: inline-block;
+            color: black;
+            padding: 0 0.5em;
+            line-height: 1.5em;
+            color: #818078;
+            background-color: #fcfcfa;
+        }
+
+        .passed-step {
+            color: #69A41F !important;
+            opacity: .6;
+        }
+        .current-step {
+            color: #69A41F !important;
+        }
+</style>
+
+<div class="d-flex justify-content-center mt-2 mb-4">
+
+    <a class="d-flex flex-column justify-content-center px-4 step-cart">
+        <i class="fas fa-shopping-cart text-light-green fa-2x"></i>
+    </a>
+
+    <div class="d-flex flex-column">
+        <div class="w-100">
+            <hr class="hr-text my-0" data-content="Checkout">
+        </div>
+
+        <div class="d-flex justify-content-center mt-2">
+
+            <a class="d-flex flex-column px-3 align-items-center step-address">
+                <i class="fas fa-map-marked text-muted" style="font-size: 18px;"></i>
+                <span class="text-muted-x"> Adress </span>
+            </a>
+
+            <a class="d-flex flex-column px-3 align-items-center step-shipping">
+                <i class="fas fa-truck-loading text-muted" style="font-size: 18px;"></i>
+                <span class="text-muted-x"> Shipping </span>
+            </a>
+
+            <a class="d-flex flex-column px-3 align-items-center step-payment">
+                <i class="fas fa-credit-card text-muted" style="font-size: 18px;"></i>
+                <span class="text-muted-x"> Payment </span>
+            </a>
+
+            <a class="d-flex flex-column px-3 align-items-center step-perishable" style="display: none !important;">
+                <i class="fas fa-seedling text-muted" style="font-size: 18px;"></i>
+                <span class="text-muted-x"> Confirm Perishable Items </span>
+            </a>
+
+            <a class="d-flex flex-column px-3 align-items-center step-confirm">
+                <i class="fas fa-tasks text-muted" style="font-size: 18px;"></i>
+                <span class="text-muted-x"> Confirm </span>
+            </a>
+
+            <a class="d-flex flex-column px-3 align-items-center step-complete">
+                <i class="fas fa-check-circle text-muted" style="font-size: 18px;"></i>
+                <span class="text-muted-x"> Complete </span>
+            </a>
+
+        </div>
+    </div>
+
+</div>
+
+<script asp-location="Footer">
+    $(document).ready(function () {
+
+        const href = location.href.toLowerCase();
+
+        if (href.includes('address')) {
+            $('.step-address i').removeClass('text-muted').addClass('current-step');
+            $('.step-cart').attr('href', '@Url.RouteUrl("ShoppingCart")');
+        }
+
+        if (href.includes('shippingmethod')) {
+            $('.step-address i, .step-shipping i').removeClass('text-muted');
+            $('.step-address i').addClass('passed-step');
+            $('.step-shipping i').addClass('current-step');
+
+            //
+            $('.step-cart').attr('href', '@Url.RouteUrl("ShoppingCart")');
+            $('.step-address').attr('href', '@Url.RouteUrl("CheckoutShippingAddress")');
+        }
+
+        if (href.includes('payment')) {
+            $('.step-address i, .step-shipping i, .step-payment i').removeClass('text-muted');
+            $('.step-address i, .step-shipping i').addClass('passed-step');
+            $('.step-payment i').addClass('current-step');
+
+            //
+            $('.step-cart').attr('href', '@Url.RouteUrl("ShoppingCart")');
+            $('.step-address').attr('href', '@Url.RouteUrl("CheckoutShippingAddress")');
+            $('.step-shipping').attr('href', '@Url.RouteUrl("CheckoutShippingMethod")');
+        }
+
+        if (href.includes('confirm')) {
+            $('.step-address i, .step-shipping i, .step-payment i, .step-confirm i').removeClass('text-muted');
+            $('.step-address i, .step-shipping i, .step-payment i').addClass('passed-step');
+            $('.step-confirm i').addClass('current-step');
+
+            //
+            $('.step-cart').attr('href', '@Url.RouteUrl("ShoppingCart")');
+            $('.step-address').attr('href', '@Url.RouteUrl("CheckoutShippingAddress")');
+            $('.step-shipping').attr('href', '@Url.RouteUrl("CheckoutShippingMethod")');
+            $('.step-payment').attr('href', '@Url.RouteUrl("CheckoutPaymentMethod")');
+        }
+
+        if (href.includes('completed')) {
+            $('.step-address i, .step-shipping i, .step-payment i, .step-confirm i')
+                .removeClass('text-muted').addClass('passed-step');
+            $('.step-complete i').addClass('current-step');
+            $('.step-cart').attr('href', '@Url.RouteUrl("ShoppingCart")');
+        }
+
+        if (href.includes('perishableitems')) {
+            $('.step-address, .step-shipping, .step-payment, .step-confirm').remove();
+            $('.step-perishable').show().find('i').removeClass('text-muted').addClass('current-step');
+            $('.step-cart').attr('href', '@Url.RouteUrl("ShoppingCart")');
+            $('.step-cart').removeClass('text-muted').addClass('passed-step');
+        }
+
+
+
+    });
+</script>

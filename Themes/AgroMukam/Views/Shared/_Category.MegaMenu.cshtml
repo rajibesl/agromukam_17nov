@@ -1,0 +1,35 @@
+﻿@model IList<CategorySimpleModel>
+
+<ul class="masonry shop-by-category">
+    @foreach (var category in Model)
+    {
+    <li class="masonry-item">
+        <a href="@Url.RouteUrl("Category", new { SeName = category.SeName })" title="@category.RollOverText">@category.Name</a>
+        @if (category.HaveSubCategories)
+        {
+            <ul>
+                @await Html.PartialAsync("_Category.MegaMenu.Child", category.SubCategories)
+            </ul>
+        }
+    </li>
+    }
+</ul>
+@*<div class="masonry">
+    @foreach (var category in Model)
+    {
+        <div class="masonry-item">
+            <div class="masonry-content p-1">
+                <h4 style="font-size: 15px; line-height: 16px;">
+                    <a href="@Url.RouteUrl("Category", new { SeName = category.SeName })" title="@category.RollOverText">@category.Name</a>
+                </h4>
+                <hr>
+                @if (category.HaveSubCategories)
+                {
+                    <ul class="subcategory-ul">
+                        @await Html.PartialAsync("_Category.MegaMenu.Child", category.SubCategories)
+                    </ul>
+                }
+            </div>
+        </div>
+    }
+</div>*@

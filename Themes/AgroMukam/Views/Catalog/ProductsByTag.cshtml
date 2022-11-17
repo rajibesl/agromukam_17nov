@@ -1,0 +1,95 @@
+﻿@model ProductsByTagModel
+@using Nop.Core.Domain.Seo
+@inject Nop.Core.IWebHelper webHelper
+@inject SeoSettings seoSettings
+@{
+    Layout = "_ColumnsOne";
+
+    //title
+    Html.AddTitleParts(string.Format(T("PageTitle.ProductsByTag").Text, Model.TagName));
+    //page class
+    Html.AppendPageCssClassParts("html-product-tag-page");
+
+    //canonical URL
+    if (seoSettings.CanonicalUrlsEnabled)
+    {
+        var productsByTagUrl = Url.RouteUrl("ProductsByTag", new { SeName = Model.TagSeName }, webHelper.GetCurrentRequestProtocol()).ToLowerInvariant();
+        Html.AddCanonicalUrlParts(productsByTagUrl, seoSettings.QueryStringInCanonicalUrlsEnabled);
+    }
+}
+
+<input type="hidden" value="@($"ProductTags:'{Model.TagName}'")" id="defaultFacetFilters" />
+
+
+<div class="page product-tag-page pt-2">
+
+    <div class="page-body container-fluid">
+
+        <div class="search-container">
+            <div class="left-panel as-sidebar">
+                <div class="ais-header" style="display: none;">
+                    @T("Plugin.Misc.AgroMisc.Algolia.Filters.RelatedCategories")
+                </div>
+                <div id="categories"></div>
+                @* attributes *@
+                <div class="ais-header mt-3" style="display: none;">
+                    @T("Plugin.Misc.AgroMisc.Algolia.Filters.Vendors")
+                </div>
+                <div id="vendors"></div>
+                <div class="ais-header mt-3" style="display: none;">
+                    @T("Plugin.Misc.AgroMisc.Algolia.Filters.Manufacturers")
+                </div>
+                <div id="manufacturers"></div>
+                @* spec attributes *@
+                <div class="ais-header mt-3" style="display: none;">
+                    @T("Plugin.Misc.AgroMisc.Algolia.Filters.CountryOfOrigin")
+                </div>
+                <div id="country-of-origin"></div>
+                <div class="ais-header mt-3" style="display: none;">
+                    @T("Plugin.Misc.AgroMisc.Algolia.Filters.Services")
+                </div>
+                <div id="services"></div>
+                <div class="ais-header mt-3" style="display: none;">
+                    @T("Plugin.Misc.AgroMisc.Algolia.Filters.Location")
+                </div>
+                <div id="waLocation"></div>
+                <div class="ais-header mt-3" style="display: none;">
+                    @T("Plugin.Misc.AgroMisc.Algolia.Filters.Price")
+                </div>
+                <div id="price"></div>
+                <div class="ais-header mt-3" style="display: none;">
+                    @T("Plugin.Misc.AgroMisc.Algolia.Filters.Ratings")
+                </div>
+                <div id="ratings"></div>
+            </div>
+
+            <div class="right-panel as-content">
+                <div class="row">
+                    <div class="col-12 col-sm-6 d-flex align-items-center">
+                        <div id="stats"></div>
+                    </div>
+                    <div class="col-12 col-sm-6 d-flex justify-content-sm-end">
+                        <div id="sort-by" style="max-width: 235px;"></div>
+                    </div>
+                </div>
+                <div id="current-refinements" class="mb-2"></div>
+                <div id="hits"></div>
+                <div id="pagination"></div>
+            </div>
+        </div>
+
+        <div class="as-filter-toggler d-lg-none">
+            <div class="d-flex flex-column justify-content-center align-items-center">
+                <button class="btn btn-sm bg-light-green text-white rounded-pill shadow">
+                    <i class="fas fa-filter"></i>
+                    Filters
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script asp-location="Footer"
+        src="/Themes/AgroMukam/Content/js/as-global.js?v=@DateTime.UtcNow.Millisecond"></script>

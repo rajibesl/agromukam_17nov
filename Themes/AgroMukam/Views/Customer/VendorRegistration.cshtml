@@ -1,0 +1,1719 @@
+﻿@model ApplyVendorModel
+@using Nop.Services.Customers
+@using Nop.Services.Vendors
+@using Nop.Core.Domain.Catalog
+@using System.Text.RegularExpressions
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+@functions{
+    private static readonly Regex sWhitespace = new Regex(@"\s+");
+    public static string ReplaceWhitespace(string input, string replacement)
+    {
+        return sWhitespace.Replace(input, replacement);
+    }
+    public string GetAntiXsrfRequestToken()
+    {
+        return Xsrf.GetAndStoreTokens(Context).RequestToken;
+    }
+}
+@{
+    Layout = "_ColumnsOne";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.Register").Text);
+    //page class
+    Html.AppendPageCssClassParts("html-registration-page");
+}
+<link rel="stylesheet" href="/Themes/AgroMukam/Content/css/slide-unlock.css">
+<style>
+    .partnership-type .card {
+        border-top: 4px solid rgba(105, 164, 31, .35);
+        border-right: none;
+        border-bottom: none;
+        border-left: none;
+        transition: 0.5s all ease-in-out;
+    }
+
+        .partnership-type .card .card-header {
+            border-bottom-style: dashed;
+        }
+
+            .partnership-type .card .card-header h6 {
+                color: #6c757d;
+            }
+
+        .partnership-type .card .card-body h6 {
+            font-size: 14px;
+            line-height: 16px;
+        }
+
+        .partnership-type .card .card-header i {
+            color: rgba(0, 0, 0, .4);
+            transition: 0.3s all ease-in-out;
+        }
+
+        .partnership-type .card.active .card-header i {
+            color: #69A41F;
+        }
+
+        .partnership-type .card.active {
+            border-top-color: #69A41F;
+        }
+
+    .partnership-type .list-check > li {
+        line-height: 18px;
+    }
+
+    .step-badge {
+        height: 30px;
+        width: 30px;
+        display: inline-block;
+        text-align: center;
+        line-height: 30px;
+        margin-right: 8px;
+    }
+
+    h5.title:not(.current),
+    h5.title:not(.current) + hr {
+        display: none;
+    }
+
+    .custom-file-label::after {
+        background: #69A41F;
+        color: #fff;
+        border-radius: 0;
+    }
+
+    .custom-file-upload-required {
+        position: absolute;
+        top: 100%;
+        left: 0;
+    }
+
+    .form-processing-loader {
+        position: absolute;
+        top: 0;
+        left: 0;
+        background: rgba(255,255,255, .7);
+        z-index: 99;
+    }
+</style>
+<div class="page registration-page">
+    <div class="page-body pt-3">
+
+        <div class="registration-wrap container-fluid container-xl">
+
+            <div class="row no-gutters">
+                @*<div class="col-auto d-none d-lg-block" style="width: 320px;">
+                        @await Html.PartialAsync("_VendorPartnershipType")
+                    </div>*@
+                <div class="col ml-lg-3">
+
+                    <div class="card border-0 rounded-0 m-auto shadow-sm">
+                        <div class="card-body p-0">
+                            @* Title *@
+                            <div class="form-title text-center pt-4 pl-4 pr-4 pb-3">
+                                @await Component.InvokeAsync("Logo")
+                                <h4 class="text-light-green mt-3">@T("VendorRegistration.ApplyForAVendorAccount")</h4>
+                            </div>
+                        </div>
+                    </div>
+
+                    @*<div class="d-lg-none mt-3">
+                            @await Html.PartialAsync("_VendorPartnershipType")
+                        </div>*@
+
+                    <div class="card border-0 rounded-0 ml-auto mr-auto mt-3 shadow-sm">
+                        <div class="card-body p-0">
+
+                            <div class="form-processing-loader w-100 h-100" style="display: none;">
+                                <div class="d-flex flex-column justify-content-center h-100">
+                                    <img src="/Themes/AgroMukam/Content/images/loading.gif" class="d-block mx-auto my-3" />
+                                    <span class="text-light-green text-center"> Uploading images, please wait... </span>
+                                </div>
+                            </div>
+
+                            <form id="vendorRegistrationForm"
+                                  asp-route="VendorRegistration"
+                                  asp-route-returnurl="@Context.Request.Query["ReturnUrl"]"
+                                  method="post">
+                                <div asp-validation-summary="ModelOnly" class="message-error"></div>
+                                <div>
+
+                                    @* Personal Details *@
+                                    <h5 class="m-4 text-muted align-items-center">
+                                        <span class="step-badge bg-light-green text-white"> @T("VendorRegistration.1") </span>
+                                        @T("VendorRegistration.TellUsAboutYourself")
+                                    </h5>
+                                    <hr class="border-dashed" />
+                                    <section class="fieldset personal-details">
+                                        <div class="form-fields">
+
+                                            @* Account Type *@
+                                            <div class="form-group account-type pl-5 pr-5">
+                                                <div class="row">
+                                                    <label for="AccountType" class="col-auto pt-3">@T("VendorRegistration.AccountType") <span class="text-danger ml-2">*</span></label>
+                                                    <div class="col">
+                                                        <div class="input-group form-group inputs">
+                                                            @{
+                                                                var accountType = Model.VendorAttributes
+                                                                    .Where(x => x.FormStepId == 0 && x.FormGroupName == "common")
+                                                                    .FirstOrDefault();
+                                                            }
+                                                            @if (accountType != null)
+                                                            {
+                                                                <ul class="option-list">
+                                                                    @foreach (var attributeValue in accountType.Values)
+                                                                    {
+                                                                        var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{accountType.Id}";
+                                                                        <li>
+                                                                            <input id="@(controlId)_@(attributeValue.Id)"
+                                                                                   type="radio"
+                                                                                   name="@(controlId)"
+                                                                                   value="@attributeValue.Id"
+                                                                                   checked="@attributeValue.IsPreSelected" />
+                                                                            <label for="@(controlId)_@(attributeValue.Id)">
+                                                                                @attributeValue.Name
+                                                                            </label>
+                                                                        </li>
+                                                                    }
+                                                                </ul>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <input type="hidden"
+                                                   id="ActTypeHelper"
+                                                   asp-for="AccountType"
+                                                   value="1" />
+
+
+                                            @* Mobile No. *@
+                                            <div class="form-group pl-5 pr-5">
+                                                <label for="Phone" class="mb-1"> @T("VendorRegistration.PhoneNumber")<span class="text-danger ml-2">*</span> </label>
+                                                <div class="row no-gutters position-relative">
+                                                    <div class="col-auto position-static" style="width: 135px;">
+                                                        <div class="dropdown phone-area-code-dropdown position-static">
+                                                            <button id="btnAreaCode"
+                                                                    type="button"
+                                                                    class="btn btn-block rounded-0 text-muted pl-2 pr-2 dropdown-toggle"
+                                                                    data-toggle="dropdown"
+                                                                    data-display="static"
+                                                                    aria-haspopup="true"
+                                                                    aria-expanded="false"
+                                                                    data-selected-area-code="880">
+                                                                <div class="row no-gutters">
+                                                                    <div class="col btn-text text-left text-truncate">(000) ...</div>
+                                                                    <div class="col-auto dropdown-caret">
+                                                                        <i class="fas fa-chevron-down"></i>
+                                                                    </div>
+                                                                </div>
+                                                            </button>
+                                                            <div class="dropdown-menu w-100 border-0 rounded-0 shadow">
+                                                                <div class="form-group p-2 m-0 bg-white">
+                                                                    <input id="searchAreaCode"
+                                                                           type="text"
+                                                                           placeholder="Type to search..."
+                                                                           class="form-control form-control-sm">
+                                                                </div>
+                                                                <div class="dropdown-menu-items"></div>
+                                                            </div>
+                                                            <input id="areaCodeHelper" name="areaCode" type="hidden" value="880" />
+                                                        </div>
+                                                    </div>
+                                                    <div class="col">
+                                                        <input type="text"
+                                                               id="Phone"
+                                                               name="Phone"
+                                                               class="form-control"
+                                                               data-val="true"
+                                                               data-val-required="@T("VendorRegistration.PhoneNoIsRequired")"
+                                                               data-val-number="@T("VendorRegistration.PhoneNoShouldContainDigitsOnly")"
+                                                               data-val-regex="@T("VendorRegistration.PleaseTypeInAValidPhoneNo")"
+                                                               data-val-regex-pattern="^[0-9]{9,11}$"
+                                                               data-val-remote-url="@Url.RouteUrl("CheckPhoneNumberAvailability")"
+                                                               data-val-remote-additionalfields="*.areaCode"
+                                                               data-val-remote="@T("VendorRegistration.ThisPhoneNumberIsAlreadyRegistered")"
+                                                               data-val-remote-success="remoteSuccess()"
+                                                               disabled>
+                                                    </div>
+                                                </div>
+                                                <span class="field-validation-valid" data-valmsg-for="Phone" data-valmsg-replace="true"></span>
+                                                <h3 class="failed-to-send-otp text-danger text-center" style="display: none;">@T("VendorRegistration.SomethingWentWrong,PleaseTryAgain...")<span></span></h3>
+                                            </div>
+                                            @* Slide to send Verification Code *@
+                                            <div class="form-group slide-to-verify pl-5 pr-5">
+                                                <label class="mb-1">@T("VendorRegistration.Verify"): </label>
+                                                <div id="slideToVerify" class="is-disabled"></div>
+                                                <label class="text-danger val-msg mt-1" style="display: none;">@T("VendorRegistration.PleaseVerifyYourPhoneNumber")</label>
+                                            </div>
+
+                                            @* Mobile Verification *@
+                                            <div class="form-group pl-5 pr-5 phone-verification-code" style="display: none;">
+                                                <label for="PhoneVerificationCode">@T("VendorRegistration.VerificationCode"):<span class="text-danger ml-2">*</span></label>
+                                                <div class="input-group">
+                                                    <input type="text"
+                                                           id="PhoneVerificationCode"
+                                                           name="PhoneVerificationCode"
+                                                           class="form-control"
+                                                           data-val="true"
+                                                           data-val-required="@T("VendorRegistration.VerificationCodeIsRequired").">
+                                                    <div class="input-group-append">
+                                                        <button class="btn bg-light-green text-white rounded-0 verify-otp" data-verified="false" type="button" disabled>@T("VendorRegistration.ClickToVerify")</button>
+                                                    </div>
+                                                </div>
+                                                <span class="field-validation-valid" data-valmsg-for="PhoneVerificationCode" data-valmsg-replace="true"></span>
+                                            </div>
+                                            <h4 class="invalid-code-info text-danger text-center" style="text-transform: initial; display: none;">@T("VendorRegistration.InvalidCode")!<span></span></h4>
+                                            <p class="resend-info text-info text-center" style="text-transform: initial; display: none;">@T("VendorRegistration.YouCanRequestToResendCodeIn") <span></span></p>
+                                            <h6 class="must-verify-phone text-danger text-center" style="text-transform: initial; display: none;">@T("VendorRegistration.YouMustVerifyYourPhoneNumber") <span></span></h6>
+                                            <input type="hidden" id="UserNameHelper" asp-for="RegisterModel.Username" value="" />
+                                            <input type="hidden" id="PhoneNumberHelper" asp-for="RegisterModel.Phone" value="" />
+
+                                            @* First Name *@
+                                            <div class="form-group pl-5 pr-5">
+                                                <label for="FirstName">@T("VendorRegistration.FirstName"):<span class="text-danger ml-2">*</span></label>
+                                                <input class='form-control' asp-for="RegisterModel.FirstName" />
+                                                <span class="field-validation-valid"
+                                                      data-valmsg-for="RegisterModel.FirstName"
+                                                      data-valmsg-replace="true"></span>
+                                            </div>
+                                            @* Last Name *@
+                                            <div class="form-group pl-5 pr-5">
+                                                <label for="LastName">@T("VendorRegistration.LastName"):<span class="text-danger ml-2">*</span></label>
+                                                <input class='form-control' asp-for="RegisterModel.LastName" />
+                                                <span class="field-validation-valid"
+                                                      data-valmsg-for="RegisterModel.LastName"
+                                                      data-valmsg-replace="true"></span>
+                                            </div>
+                                            @* Email *@
+                                            <div class="form-group pl-5 pr-5">
+                                                <label for="Email">@T("VendorRegistration.Email"):</label>
+                                                <input class='form-control' asp-for="RegisterModel.Email" />
+                                                <span class="field-validation-valid"
+                                                      data-valmsg-for="RegisterModel.Email"
+                                                      data-valmsg-replace="true"></span>
+                                            </div>
+                                            @* Password *@
+                                            <div class="form-group pl-5 pr-5">
+                                                <label for="RegisterModel.Password">@T("VendorRegistration.Password"): <span class="text-danger ml-2">*</span></label>
+                                                <input type="password"
+                                                       class="form-control"
+                                                       id="RegisterModel_Password"
+                                                       name="RegisterModel.Password"
+                                                       data-val="true"
+                                                       data-val-required="Password is required." />
+                                                <span class="field-validation-valid" data-valmsg-for="RegisterModel.Password" data-valmsg-replace="true"></span>
+                                            </div>
+                                            @* Confirm Password *@
+                                            <div class="form-group pl-5 pr-5">
+                                                <label for="RegisterModel.ConfirmPassword">@T("VendorRegistration.ConfirmPassword"):<span class="text-danger ml-2">*</span></label>
+                                                <input type="password"
+                                                       class="form-control"
+                                                       id="RegisterModel_ConfirmPassword"
+                                                       name="RegisterModel.ConfirmPassword"
+                                                       data-val="true"
+                                                       data-val-required="Confirm Password is required." />
+                                                <span class="field-validation-valid" data-valmsg-for="RegisterModel.ConfirmPassword" data-valmsg-replace="true"></span>
+                                            </div>
+
+                                            @* Business Info *@
+                                            @* Company Name *@
+                                            <div class="form-group pl-5 pr-5 vendor-attributes" style="display: none;">
+                                                <label for="Name">@T("VendorRegistration.CompanyName"):<span class="text-danger ml-2">*</span></label>
+                                                <input class='form-control' asp-for="Name" />
+                                                <span class="field-validation-valid"
+                                                      data-valmsg-for="Name"
+                                                      data-valmsg-replace="true"></span>
+                                            </div>
+                                            @* Business Email *@
+                                            <div class="form-group pl-5 pr-5 vendor-attributes" style="display: none;">
+                                                <label for="Email">@T("VendorRegistration.BusinessEmail"):</label>
+                                                <input class='form-control not-required' id="Email" name="Email" />
+                                                <span class="field-validation-valid"
+                                                      data-valmsg-for="Email"
+                                                      data-valmsg-replace="true"></span>
+                                            </div>
+                                            <div class="form-group pl-5 pr-5 vendor-attribute" style="display: none;">
+                                                <input type="checkbox" id="BusinessEmailSameAsPersonal" name="BusinessEmailSameAsPersonal" value="true">
+                                                <label for="BusinessEmailSameAsPersonal">@T("VendorRegistration.SameAsPersonalEmail")</label>
+                                            </div>
+                                        </div>
+                                        <div class="accept-consent">
+                                            <hr class="border-dashed" />
+                                            <div class="form-group pl-5 pr-5">
+                                                <input id="accept-consent" type="checkbox" name="accept-consent" />
+                                                <label for="accept-consent">@T("Account.Fields.AcceptPrivacyPolicy")</label>
+                                                @if (Model.RegisterModel.AcceptPrivacyPolicyPopup)
+                                                {
+                                                    <span class="read" id="read-privacyinfo">@T("Account.Fields.AcceptPrivacyPolicy.Read")</span>
+                                                    <script asp-location="Footer">
+                                        $(document).ready(function() {
+                                            $('#read-privacyinfo').on('click',
+                                                function(e) {
+                                                    displayPopupContentFromUrl(
+                                                        '@Url.RouteUrl("TopicPopup", new {SystemName = "privacyinfo"})',
+                                                        '@T("Account.Fields.AcceptPrivacyPolicy")');
+                                                });
+                                        });
+                                                    </script>
+                                                }
+                                                else
+                                                {
+                                                    <a class="read" id="read-privacyinfo" href="@Url.RouteUrl("Topic", new {SeName = Html.GetTopicSeNameAsync("privacyinfo") })">@T("Account.Fields.AcceptPrivacyPolicy.Read")</a>
+                                                }
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    @* AddressBook *@
+                                    <h5 class="m-4 text-muted align-items-center">
+                                        <span class="step-badge bg-light-green text-white"> @T("VendorRegistration.2") </span>
+                                        @T("VendorRegistration.AddressBook")
+                                    </h5>
+                                    <hr class="border-dashed" />
+                                    <section class="fieldset address-book">
+                                        <div class="business-address-book">
+                                            <div class="pl-5 pr-5 pt-2 pb-2">
+                                                <h5 class="text-light-green">@T("VendorRegistration.BusinessAddress")</h5>
+                                            </div>
+                                            <div class="form-fields business-address">
+                                                @* Business Address *@
+                                                <input type="hidden" value="20" name="RegisterModel.CountryId" id="RegisterModel_CountryId" />
+                                                @{
+                                                    var businessAddressAttrs = Model.VendorAttributes
+                                                                                                        .Where(x => x.FormStepId == 2 && x.FormGroupName == "personal")
+                                                                                                        .ToList();
+                                                }
+
+                                                <div class="form-group pl-5 pr-5">
+                                                    @{
+                                                        var regionAttr = businessAddressAttrs
+                                                            .Where(x => x.Name.ToLower().Contains("region"))
+                                                            .FirstOrDefault();
+                                                        if (regionAttr != null)
+                                                        {
+                                                            var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{regionAttr.Id}";
+                                                            <input type="hidden"
+                                                                   id="@(controlId)"
+                                                                   name="@(controlId)"
+                                                                   class="RegisterModel.RegionId" />
+                                                        }
+                                                    }
+                                                    <label for="RegionId"></label> @("Registration.Fields.Region") <span class="text-danger ml-2">*</span>
+                                                    <select asp-for="RegisterModel.RegionId" class="form-control"></select>
+                                                    <span class="field-validation-valid"
+                                                          data-valmsg-for="RegisterModel.RegionId"
+                                                          data-valmsg-replace="true"></span>
+                                                </div>
+                                                <div class="form-group pl-5 pr-5">
+                                                    @{
+                                                        var cityAttr = businessAddressAttrs
+                                                            .Where(x => x.Name.ToLower().Contains("city"))
+                                                            .FirstOrDefault();
+                                                        if (cityAttr != null)
+                                                        {
+                                                            var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{cityAttr.Id}";
+                                                            <input type="hidden"
+                                                                   id="@(controlId)"
+                                                                   name="@(controlId)"
+                                                                   class="RegisterModel.CityId" />
+                                                        }
+                                                    }
+                                                    <label for="CityId">@("Registration.Fields.City")</label> <span class="text-danger ml-2">*</span>
+                                                    <select asp-for="RegisterModel.CityId" class="form-control"></select>
+                                                    <span class="field-validation-valid"
+                                                          data-valmsg-for="RegisterModel.CityId"
+                                                          data-valmsg-replace="true"></span>
+                                                </div>
+                                                <div class="form-group pl-5 pr-5">
+                                                    @{
+                                                        var areaAttr = businessAddressAttrs
+                                                            .Where(x => x.Name.ToLower().Contains("area"))
+                                                            .FirstOrDefault();
+                                                        if (areaAttr != null)
+                                                        {
+                                                            var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{areaAttr.Id}";
+                                                            <input type="hidden"
+                                                                   id="@(controlId)"
+                                                                   name="@(controlId)"
+                                                                   class="RegisterModel.AreaId" />
+                                                        }
+                                                    }
+                                                    <label for="AreaId">@("Registration.Fields.Area")</label> <span class="text-danger ml-2">*</span>
+                                                    <select asp-for="RegisterModel.AreaId" class="form-control"></select>
+                                                    <span class="field-validation-valid"
+                                                          data-valmsg-for="RegisterModel.AreaId"
+                                                          data-valmsg-replace="true"></span>
+                                                </div>
+                                                <div class="form-group pl-5 pr-5">
+                                                    @{
+                                                        var addressAttr = businessAddressAttrs
+                                                            .Where(x => x.Name.ToLower().Contains("address"))
+                                                            .FirstOrDefault();
+                                                        if (addressAttr != null)
+                                                        {
+                                                            var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{addressAttr.Id}";
+                                                            <input type="hidden"
+                                                                   id="@(controlId)"
+                                                                   name="@(controlId)"
+                                                                   class="RegisterModel.StreetAddress" />
+                                                        }
+                                                    }
+                                                    <label asp-for="RegisterModel.StreetAddress"></label> <span class="text-danger ml-2">*</span>
+                                                    <input class='form-control' asp-for="RegisterModel.StreetAddress" data-val="true"
+                                                           data-val-required="Street Address is required." />
+                                                    <span class="field-validation-valid"
+                                                          data-valmsg-for="RegisterModel.StreetAddress"
+                                                          data-valmsg-replace="true"></span>
+                                                </div>
+                                            </div>
+                                            <hr class="border-dashed" />
+                                            <div class="pl-5 pr-5 pt-2 pb-2">
+                                                <h5 class="text-light-green">@T("VendorRegistration.WarehouseAddress")</h5>
+                                            </div>
+                                            <div class="form-fields warehouse-address">
+
+                                                <div class="form-group inputs pl-5 pr-5">
+                                                    <ul class="option-list">
+                                                        <li>
+                                                            <input id="waAddressSameAsBusinessAddress" type="checkbox" name="waAddressSameAsBusinessAddress" value="waEqBusiness">
+                                                            <label for="waAddressSameAsBusinessAddress">@T("VendorRegistration.SameAsBusinessAddress")</label>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+
+                                                @* Warehouse Address *@
+                                                <input type="hidden" value="20" name="CountryId" id="CountryId" />
+                                                @{
+                                                    var warehouseAddressAttrs = Model.VendorAttributes
+                                                                                                            .Where(x => x.FormStepId == 2 && x.FormGroupName == "business")
+                                                                                                            .ToList();
+                                                }
+
+                                                <div class="form-group pl-5 pr-5">
+                                                    @{
+                                                        var warehouseRegionAttr = warehouseAddressAttrs
+                                                            .Where(x => x.Name.ToLower().Contains("region"))
+                                                            .FirstOrDefault();
+                                                        if (warehouseRegionAttr != null)
+                                                        {
+                                                            var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{warehouseRegionAttr.Id}";
+                                                            <input type="hidden"
+                                                                   id="@(controlId)"
+                                                                   name="@(controlId)"
+                                                                   class="RegionId" />
+                                                        }
+                                                    }
+                                                    <label for="RegionId">@("Registration.Fields.Region")</label> <span class="text-danger ml-2">*</span>
+                                                    <select asp-for="RegionId" class="form-control"></select>
+                                                    <span class="field-validation-valid"
+                                                          data-valmsg-for="RegionId"
+                                                          data-valmsg-replace="true"></span>
+                                                </div>
+                                                <div class="form-group pl-5 pr-5">
+                                                    @{
+                                                        var warehouseCityAttr = warehouseAddressAttrs
+                                                            .Where(x => x.Name.ToLower().Contains("city"))
+                                                            .FirstOrDefault();
+                                                        if (warehouseCityAttr != null)
+                                                        {
+                                                            var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{warehouseCityAttr.Id}";
+                                                            <input type="hidden"
+                                                                   id="@(controlId)"
+                                                                   name="@(controlId)"
+                                                                   class="CityId" />
+                                                        }
+                                                    }
+                                                    <label for="CityId">@("Registration.Fields.City")</label> <span class="text-danger ml-2">*</span>
+                                                    <select asp-for="CityId" class="form-control"></select>
+                                                    <span class="field-validation-valid"
+                                                          data-valmsg-for="CityId"
+                                                          data-valmsg-replace="true"></span>
+                                                </div>
+                                                <div class="form-group pl-5 pr-5">
+                                                    @{
+                                                        var warehouseAreaAttr = warehouseAddressAttrs
+                                                            .Where(x => x.Name.ToLower().Contains("area"))
+                                                            .FirstOrDefault();
+                                                        if (warehouseAreaAttr != null)
+                                                        {
+                                                            var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{warehouseAreaAttr.Id}";
+                                                            <input type="hidden"
+                                                                   id="@(controlId)"
+                                                                   name="@(controlId)"
+                                                                   class="AreaId" />
+                                                        }
+                                                    }
+                                                    <label for="AreaId">@("Registration.Fields.Area")</label> <span class="text-danger ml-2">*</span>
+                                                    <select asp-for="AreaId" class="form-control"></select>
+                                                    <span class="field-validation-valid"
+                                                          data-valmsg-for="AreaId"
+                                                          data-valmsg-replace="true"></span>
+                                                </div>
+                                                <div class="form-group pl-5 pr-5">
+                                                    @{
+                                                        var warehouseAddressAttr = warehouseAddressAttrs
+                                                            .Where(x => x.Name.ToLower().Contains("address"))
+                                                            .FirstOrDefault();
+                                                        if (warehouseAddressAttr != null)
+                                                        {
+                                                            var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{warehouseAddressAttr.Id}";
+                                                            <input type="hidden"
+                                                                   id="@(controlId)"
+                                                                   name="@(controlId)"
+                                                                   class="StreetAddress" />
+                                                        }
+                                                    }
+                                                    <label asp-for="StreetAddress"></label> <span class="text-danger ml-2">*</span>
+                                                    <input class='form-control' asp-for="StreetAddress" data-val="true"
+                                                           data-val-required="Street Address is required." />
+                                                    <span class="field-validation-valid"
+                                                          data-valmsg-for="StreetAddress"
+                                                          data-valmsg-replace="true"></span>
+                                                </div>
+
+                                                <hr class="border-dashed" />
+                                                @* Return Address *@
+                                                @{
+                                                    var returnAddress = Model.VendorAttributes
+                                                                .FirstOrDefault(x => x.FormStepId == 2 && x.FormGroupName == "common");
+                                                    if (returnAddress != null)
+                                                    {
+                                                        var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{returnAddress.Id}";
+                                                        <div class="form-group inputs return-address">
+                                                            <label>@T("VendorRegistration.ReturnAddress") <span class="text-danger ml-2">*</span></label>
+                                                            <ul class="option-list">
+                                                                @foreach (var attributeValue in returnAddress.Values)
+                                                                {
+                                                                    var textPrompt = attributeValue.Name;
+                                                                    <li>
+                                                                        <input id="@(controlId)_@(attributeValue.Id)" type="radio" name="@(controlId)" value="@attributeValue.Id" checked="@attributeValue.IsPreSelected" />
+                                                                        <label for="@(controlId)_@(attributeValue.Id)">@textPrompt</label>
+                                                                    </li>
+                                                                }
+                                                            </ul>
+                                                            <span class="field-validation-valid"
+                                                                  data-valmsg-for="@(controlId)"
+                                                                  data-valmsg-replace="true"></span>
+                                                        </div>
+                                                    }
+                                                }
+                                            </div>
+                                        </div>
+                                    </section>
+
+
+                                    @* Profile Verification *@
+                                    <h5 class="m-4 text-muted align-items-center">
+                                        <span class="step-badge bg-light-green text-white"> @T("VendorRegistraion.3") </span>
+                                        @T("VendorRegistration.ProfileVerification")
+                                    </h5>
+                                    <hr class="border-dashed" />
+                                    <section class="fieldset verification">
+                                        @* IF id type = personal *@
+                                        <div class="form-fields profile-verification">
+                                            @{
+                                                var profileVerificationAttrs = Model.VendorAttributes
+                                                    .Where(x => x.FormStepId == 3 && x.FormGroupName == "personal" && x.DisplayOrder == 0)
+                                                    .ToList();
+
+                                                if (profileVerificationAttrs.Count > 0)
+                                                {
+                                                    foreach (var attr in profileVerificationAttrs)
+                                                    {
+                                                        var className = ReplaceWhitespace(attr.Name, "-").ToLower();
+                                                        @await Html.PartialAsync("_CustomVendorAttribute", attr,
+                                                              new ViewDataDictionary(this.Vi‌​ewData) {
+                                                                {
+                                                                  "className", $"common-attributes {className}"
+                                                                }
+                                                              })
+                                                    }
+                                                }
+                                            }
+                                            @* Upload File *@
+                                            <div class="form-group pl-5 pr-5 mb-4 common-attributes">
+                                                @{
+                                                    var profileVerificationAttachment = Model.VendorAttributes
+                                                                                                                                    .Where(x => x.FormStepId == 3 && x.FormGroupName == "personal" && x.DisplayOrder == 10)
+                                                                                                                                    .FirstOrDefault();
+
+                                                    if (profileVerificationAttachment != null)
+                                                    {
+                                                        @await Html.PartialAsync("_CustomFileUpload", profileVerificationAttachment,
+                                                              new ViewDataDictionary(this.Vi‌​ewData) {
+                                                                {
+                                                                  "isRequired", "true"
+                                                                },
+                                                                {
+                                                                    "hintText", @T("Registration.Hints.PleaseUploadFileOfChosenDocument").Text
+                                                                }
+                                                              })
+                                                    }
+                                                }
+
+                                            </div>
+                                            @* Business Type *@
+                                            @{
+                                                var businessType = Model.VendorAttributes
+                                                            .FirstOrDefault(x => x.FormStepId == 3 && x.FormGroupName == "personal" && x.DisplayOrder == 1);
+                                                if (businessType != null)
+                                                {
+                                                    @await Html.PartialAsync("_CustomVendorAttribute", businessType,
+                                                              new ViewDataDictionary(this.Vi‌​ewData) {
+                                                                {
+                                                                  "className", "common-attributes"
+                                                                }
+                                                              })
+                                                }
+                                            }
+                                        </div>
+
+                                        @* IF id type = business *@
+                                        <div class="form-fields business-verification" style="display: none;">
+
+                                            @* Non-required Business Owner Info fields *@
+                                            @{
+                                                var businessVerificationAttrs = Model.VendorAttributes
+                                                    .Where(x => x.FormStepId == 3 && x.FormGroupName == "business" && x.DisplayOrder == 2)
+                                                    .ToList();
+
+                                                if (businessVerificationAttrs.Count > 0)
+                                                {
+                                                    foreach (var attr in businessVerificationAttrs)
+                                                    {
+                                                        @await Html.PartialAsync("_CustomVendorAttribute", attr,
+                                                              new ViewDataDictionary(this.Vi‌​ewData) {
+                                                                {
+                                                                  "className", "vendor-attributes"
+                                                                }
+                                                              })
+                                                    }
+                                                }
+                                            }
+                                            @* Upload File *@
+                                            <div class="form-group pl-5 pr-5 mb-4 vendor-attributes">
+
+                                                @{
+                                                    var businessVerificationAttachment = Model.VendorAttributes
+                                                                                                                                    .Where(x => x.FormStepId == 3 && x.FormGroupName == "business" && x.DisplayOrder == 10)
+                                                                                                                                    .FirstOrDefault();
+
+                                                    if (businessVerificationAttachment != null)
+                                                    {
+                                                        @await Html.PartialAsync("_CustomFileUpload", businessVerificationAttachment,
+                                                          new ViewDataDictionary(this.Vi‌​ewData) {
+                                                            {
+                                                              "isRequired", "false"
+                                                            },
+                                                            {
+                                                                "hintText", @T("Registration.Hints.PleaseUploadTradeLicense").Text
+                                                            }
+                                                          })
+                                                    }
+                                                }
+                                            </div>
+                                            @* /////////// *@
+
+                                            @* Required National ID fields *@
+                                            @{
+                                                var nationalIdVerificationAttrs = Model.VendorAttributes
+                                                    .Where(x => x.FormStepId == 3 && x.FormGroupName == "business" && x.DisplayOrder == 3)
+                                                    .ToList();
+
+                                                if (nationalIdVerificationAttrs.Count > 0)
+                                                {
+                                                    foreach (var attr in nationalIdVerificationAttrs)
+                                                    {
+                                                        @await Html.PartialAsync("_CustomVendorAttribute", attr,
+                                                              new ViewDataDictionary(this.Vi‌​ewData) {
+                                                                {
+                                                                  "className", "vendor-attributes"
+                                                                }
+                                                              })
+                                                    }
+                                                }
+                                            }
+                                            @* Upload File *@
+                                            <div class="form-group pl-5 pr-5 mb-4 vendor-attributes">
+                                                @{
+                                                    var businessProfileVerificationAttachment = Model.VendorAttributes
+                                                                                                                                    .Where(x => x.FormStepId == 3 && x.FormGroupName == "business" && x.DisplayOrder == 11)
+                                                                                                                                    .FirstOrDefault();
+
+                                                    if (businessProfileVerificationAttachment != null)
+                                                    {
+                                                        @await Html.PartialAsync("_CustomFileUpload", businessProfileVerificationAttachment,
+                                                          new ViewDataDictionary(this.Vi‌​ewData) {
+                                                            {
+                                                              "isRequired", "true"
+                                                            },
+                                                            {
+                                                                "hintText", @T("Registration.Hints.PleaseUploadNid").Text
+                                                            }
+                                                          })
+                                                    }
+                                                }
+                                            </div>
+                                            @* /////////// *@
+
+                                            @* Business Type *@
+                                            @{
+                                                var vBusinessType = Model.VendorAttributes
+                                                            .FirstOrDefault(x => x.FormStepId == 3 && x.FormGroupName == "business" && x.DisplayOrder == 1);
+                                                if (vBusinessType != null)
+                                                {
+                                                    @await Html.PartialAsync("_CustomVendorAttribute", vBusinessType,
+                                                              new ViewDataDictionary(this.Vi‌​ewData) {
+                                                                {
+                                                                  "className", "vendor-attributes"
+                                                                }
+                                                              })
+                                                }
+                                            }
+                                        </div>
+                                    </section>
+
+                                    @* Bank Information *@
+                                    <h5 class="m-4 text-muted align-items-center">
+                                        <span class="step-badge bg-light-green text-white"> @T("VendorRegistration.4")</span>
+                                        @T("VendorRegistration.BankInformation")
+                                    </h5>
+                                    <hr class="border-dashed" />
+                                    <section class="fieldset payment-details">
+                                        <div class="pl-5 pr-5 pt-2 pb-2">
+                                            <h5 class="text-light-green">@T("VendorRegistration.PaymentDetails")</h5>
+                                        </div>
+                                        <div class="form-fields personal-payment-info">
+
+                                            @{
+                                                var personalPaymentAttrs = Model.VendorAttributes
+                                                    .Where(x => x.FormStepId == 4 && x.FormGroupName == "personal" && x.DisplayOrder == 0)
+                                                    .ToList();
+
+                                                if (personalPaymentAttrs.Count > 0)
+                                                {
+                                                    foreach (var attr in personalPaymentAttrs)
+                                                    {
+                                                        if (attr.AttributeControlType == AttributeControlType.DropdownList)
+                                                        {
+                                                            <div class="payment-act-type">
+                                                                @await Html.PartialAsync("_CustomVendorAttribute", attr,
+                                                              new ViewDataDictionary(this.Vi‌​ewData) {
+                                                                {
+                                                                  "className", "common-attributes"
+                                                                }
+                                                              })
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            @await Html.PartialAsync("_CustomVendorAttribute", attr,
+                                                              new ViewDataDictionary(this.Vi‌​ewData) {
+                                                                {
+                                                                  "className", "common-attributes"
+                                                                }
+                                                              })
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+
+                                            @* bank, conditional *@
+                                            <div class="personal-bank-det" style="display: none;">
+
+                                                @{
+                                                    var customerBankDetailsAttrs = Model.VendorAttributes
+                                                        .Where(x => x.FormStepId == 4 && x.FormGroupName == "personal" && x.DisplayOrder == 1)
+                                                        .ToList();
+
+                                                    if (customerBankDetailsAttrs.Count > 0)
+                                                    {
+                                                        foreach (var attr in customerBankDetailsAttrs)
+                                                        {
+                                                            @await Html.PartialAsync("_CustomVendorAttribute", attr,
+                                                              new ViewDataDictionary(this.Vi‌​ewData) {
+                                                                {
+                                                                  "className", "common-attributes"
+                                                                }
+                                                              })
+                                                        }
+                                                    }
+                                                }
+
+                                                @* Upload File *@
+                                                <div class="form-group pl-5 pr-5 vendor-attributes">
+                                                    @{
+                                                        var personalBankChequeAttachment = Model.VendorAttributes
+                                                                                                                                        .Where(x => x.FormStepId == 4 && x.FormGroupName == "personal" && x.DisplayOrder == 10)
+                                                                                                                                        .FirstOrDefault();
+
+                                                        if (personalBankChequeAttachment != null)
+                                                        {
+                                                            @await Html.PartialAsync("_CustomFileUpload", personalBankChequeAttachment,
+                                                      new ViewDataDictionary(this.Vi‌​ewData) {
+                                                        {
+                                                          "isRequired", "true"
+                                                        }
+                                                      })
+                                                        }
+                                                    }
+
+                                                </div>
+                                            </div>
+                                            @* Seller TIN *@
+                                            @{
+                                                var sellerTINOfCustomer = Model.VendorAttributes
+                                                            .FirstOrDefault(x => x.FormStepId == 4 && x.FormGroupName == "personal" && x.DisplayOrder == 2);
+                                                if (sellerTINOfCustomer != null)
+                                                {
+                                                    var controlId = $"{NopVendorDefaults.VendorAttributePrefix}{sellerTINOfCustomer.Id}";
+                                                    <div class="form-group pl-5 pr-5 mt-4 common-attributes">
+                                                        <label> @sellerTINOfCustomer.Name</label>
+                                                        <input name="@(controlId)"
+                                                               type="text"
+                                                               class="form-control textbox not-required"
+                                                               id="@(controlId)"
+                                                               value="@sellerTINOfCustomer.DefaultValue" />
+                                                    </div>
+                                                }
+                                            }
+                                        </div>
+                                        <div class="form-fields business-payment-info" style="display: none;">
+                                            @* Business Payment Account Name *@
+                                            @{
+                                                var businessPaymentDetailsAttrs = Model.VendorAttributes
+                                                    .Where(x => x.FormStepId == 4 && x.FormGroupName == "business" && x.DisplayOrder == 0)
+                                                    .ToList();
+
+                                                if (businessPaymentDetailsAttrs.Count > 0)
+                                                {
+                                                    foreach (var attr in businessPaymentDetailsAttrs)
+                                                    {
+                                                        @await Html.PartialAsync("_CustomVendorAttribute", attr,
+                                                              new ViewDataDictionary(this.Vi‌​ewData) {
+                                                                {
+                                                                  "className", "vendor-attributes"
+                                                                }
+                                                              })
+                                                    }
+                                                }
+                                            }
+                                            @* Upload File *@
+                                            <div class="form-group pl-5 pr-5 vendor-attributes">
+                                                @{
+                                                    var businessBankChequeAttachment = Model.VendorAttributes
+                                                                                                                                    .Where(x => x.FormStepId == 4 && x.FormGroupName == "business" && x.DisplayOrder == 10)
+                                                                                                                                    .FirstOrDefault();
+
+                                                    if (businessBankChequeAttachment != null)
+                                                    {
+                                                        @await Html.PartialAsync("_CustomFileUpload", businessBankChequeAttachment,
+                                                      new ViewDataDictionary(this.Vi‌​ewData) {
+                                                        {
+                                                          "isRequired", "true"
+                                                        }
+                                                      })
+                                                    }
+                                                }
+                                            </div>
+                                            @* Seller TIN *@
+                                            @{
+                                                var sellerTINOfVendor = Model.VendorAttributes
+                                                            .FirstOrDefault(x => x.FormStepId == 4 && x.FormGroupName == "business" && x.DisplayOrder == 2);
+                                                if (sellerTINOfVendor != null)
+                                                {
+                                                    var controlIdVendor = $"{NopVendorDefaults.VendorAttributePrefix}{sellerTINOfVendor.Id}";
+
+                                                    <div class="form-group pl-5 pr-5 mt-4 vendor-attributes">
+                                                        <label> @sellerTINOfVendor.Name</label>
+                                                        <input name="@(controlIdVendor)"
+                                                               type="text"
+                                                               class="form-control textbox not-required"
+                                                               id="@(controlIdVendor)"
+                                                               value="@sellerTINOfVendor.DefaultValue" />
+                                                    </div>
+                                                }
+                                            }
+                                        </div>
+                                    </section>
+
+
+                                </div>
+                            </form>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+        </div>
+
+    </div>
+</div>
+
+<style>
+    /* span.input-invalid-message {
+                    padding-top: 7px !important;
+                }
+
+                .separator {
+                    display: block;
+                    width: 70%;
+                    border-bottom: 1px dashed #ccc;
+                    margin: 30px auto;
+                }
+
+                .inputs.accept-consent span.input-invalid-message:before {
+                    height: 0 !important;
+                }
+
+                .accept-consent-wrap {
+                    border-top: 1px dashed #ccc;
+                    padding: 15px 0 0;
+                }*/
+</style>
+
+
+<script src="/Themes/AgroMukam/Content/js/jquery.slideunlock.js" asp-location="Footer"></script>
+<script src="/Themes/AgroMukam/Content/js/jquery.steps.js" asp-location="Footer"></script>
+<script asp-location="Footer">
+
+    function loadFile(event, elId) {
+        var reader = new FileReader();
+        reader.onload = function () {
+            var output = document.querySelector(`#${elId} img`);
+            output.src = reader.result;
+        };
+        reader.readAsDataURL(event.target.files[0]);
+        $(`#${elId}`).addClass('d-flex');
+    };
+
+    function prepareAreCodeDropdownItem(item) {
+        return `<div data-text="${item.name}" data-val="${item.code}"
+            class="dropdown-item cursor-pointer d-flex no-gutters">
+                <div class="col-2">(${item.code})</div>
+                <div class="col">${item.name}</div>
+            </div>`;
+    }
+
+    function removePrecedingDigits(value) {
+        if (value && value.length > 1) {
+            let newValue = value.replace(/\D/g, '');
+            const areaCode = $('#btnAreaCode').data('selected-area-code');
+            if (areaCode == '880' && (value.startsWith('880') || value.startsWith('0'))) {
+                newValue = $('#Phone').val()
+                    .replace(/^880/, "")
+                    .replace(/^0/, "");
+            }
+            $('#Phone').val(newValue);
+            if (newValue.length >= 10)
+                $('#Phone').blur().focus();
+        }
+    }
+
+    $(document).ready(function () {
+
+        // initialize form & steps
+        var form = $('#vendorRegistrationForm');
+        var otpCountDownInterval;
+
+        form.show().children('div').steps({
+            headerTag: 'h5',
+            bodyTag: 'section',
+            transitionEffect: 'fade',
+            onStepChanging: function (event, currentIndex, newIndex) {
+                // Allways allow previous action even if the current form is not valid!
+                if (currentIndex > newIndex) {
+                    return true;
+                }
+
+                if (currentIndex == 0) {
+
+                    if ($('#UserNameHelper').val().trim().length == 0) {
+                        $('html, body').animate({
+                            scrollTop: $("#vendorRegistrationForm").offset().top
+                        }, 1000);
+                        $('.must-verify-phone').show();
+
+                        setTimeout(function () {
+                            $('.must-verify-phone').hide();
+                        }, 5000);
+                        return false;
+                    }
+
+                    var pass = $('#RegisterModel_Password').val();
+                    var confirmPass = $('#RegisterModel_ConfirmPassword').val();
+
+                    if (pass != '' && confirmPass != '' && confirmPass != pass) {
+                        alert('Password and Confirm Password must match');
+                        return false;
+                    }
+
+                    if (!$('#accept-consent').is(':checked')) {
+                        alert('@Html.Raw(JavaScriptEncoder.Default.Encode(T("Account.Fields.AcceptPrivacyPolicy.Required").Text))');
+                        return false;
+                    }
+
+                }
+
+                //if (currentIndex == 1 && !validateAddressInputs()) {
+                //    return false;
+                //}
+
+                if (currentIndex == 2) {
+                    if ($('#ActTypeHelper').val() == 1) {
+                        if ($('.profile-id-type select').val() == 0) {
+                            alert('Please select ID Type');
+                            return false;
+                        }
+                    }
+                }
+                if (currentIndex == 3) {
+                    if ($('#ActTypeHelper').val() == 1) {
+                        if ($('.payment-act-type select').val() == 0) {
+                            alert('Please select Account Type');
+                            return false;
+                        }
+                    }
+                }
+
+                form.validate().settings.ignore = ':disabled,:hidden';
+                return form.valid();
+            },
+            onStepChanged: function (event, currentIndex, priorIndex) {
+                $('html, body').animate({
+                    scrollTop: $("#vendorRegistrationForm").offset().top
+                }, 1000);
+                updateStepChangerBtns();
+            },
+            onFinishing: function (event, currentIndex) {
+                form.validate().settings.ignore = ':disabled';
+                return form.valid();
+            },
+            onFinished: function (event, currentIndex) {
+                $('#Phone').removeAttr('disabled');
+                $('#RegionId, #CityId, #AreaId, #StreetAddress')
+                    .removeAttr('disabled');
+                console.log('submitting form');
+                form.submit();
+            }
+        });
+
+        // hide step titles
+        $('.steps', form).hide();
+
+        // next-previous-finish buttons
+        form
+            .find('.actions')
+            .addClass('buttons');
+
+        updateStepChangerBtns();
+        setVisibilityForConditionalInputs(false);
+        setVisibilityForConditionalPaymentInputs(false);
+
+        // signup account type change event
+        $('.account-type input[type="radio"]').on('change', function () {
+            var val = $(this).next().text().trim();
+            var isBusinessRegistration = val == 'Business';
+            var action = isBusinessRegistration ? 'show' : 'hide';
+            var text = isBusinessRegistration ? 'Register as Vendor' : 'Register';
+            $('#ActTypeHelper').val(isBusinessRegistration ? 2 : 1);
+            $('.vendor-attribute, .vendor-attributes')[action]('slow');
+            $('.page-title h1').text(text);
+            setVisibilityForConditionalInputs(isBusinessRegistration);
+        });
+
+        $('.payment-act-type select').change(function () {
+            setVisibilityForConditionalPaymentInputs(this);
+        });
+
+        $('#BusinessEmailSameAsPersonal').change(function () {
+            var isChecked = $(this).is(':checked');
+            var val = isChecked ? $('#RegisterModel_Email').val() : '';
+            $('#Email').val(val);
+            //$('#applyVendorModel_Email').attr('disabled', isChecked);
+        });
+
+        $('#registerModel_Email').change(function () {
+            if ($('#BusinessEmailSameAsPersonal').is(':checked')) {
+                $('#Email').val($(this).val());
+            }
+        });
+
+        // validate address
+        function validateAddressInputs() {
+
+            var errorCount = 0;
+
+            $('.business-address-book select, .business-address-book input:not([type="hidden"])')
+                .each(function () {
+
+                    if ($(this).val() == null || $(this).val().length == 0) {
+                        errorCount++;
+                    }
+
+                });
+
+            var returnAddress = $('.return-address input[type="radio"]:checked').val();
+            if (!returnAddress) {
+                errorCount++;
+            }
+
+            return errorCount == 0;
+        }
+
+        // control conditionaml payment inputs
+        function setVisibilityForConditionalPaymentInputs(elem) {
+            var val = elem.selectedIndex;
+            if (val == 3) {
+                $('.personal-bank-det').show('slow');
+                $('.personal-bank-det .common-attributes input').each(function() {
+                    $(this).rules('add', { required: true });
+                });
+            } else {
+                $('.personal-bank-det').hide('slow');
+                $('.personal-bank-det .common-attributes input').each(function() {
+                    $(this).rules('remove', 'required');
+                });
+            }
+        }
+
+        // control conditional inputs
+        function setVisibilityForConditionalInputs(businessRegistration) {
+            var customerAttributes = `div:not(.personal-bank-det) .common-attributes input`;
+            var vendorAttributes = `.vendor-attributes input`;
+
+            if (businessRegistration) {
+                $(vendorAttributes).each(function () {
+                    if (!$(this).hasClass('not-required')) {
+                        $(this).rules('add', {
+                            required: true, messages: {
+                                required: "This field is required"
+                            }
+                        });
+                    }
+                });
+                $(customerAttributes).each(function() {
+                    $(this).rules('remove', 'required');
+                });
+
+                $('#BusinessVerificationFile').rules('remove', 'required');
+
+                $('.business-verification, .business-payment-info').show();
+                $('.profile-verification, .personal-payment-info').hide();
+
+            } else {
+                $(customerAttributes).each(function () {
+                    if (!$(this).hasClass('not-required')) {
+                        $(this).rules('add', {
+                            required: true, messages: {
+                                required: "This field is required"
+                            }
+                        });
+                    }
+                });
+                $(vendorAttributes).each(function() {
+                    $(this).rules('remove', 'required');
+                });
+
+                $('.business-verification, .business-payment-info').hide();
+                $('.profile-verification, .personal-payment-info').show();
+            }
+        }
+
+        function updateStepChangerBtns() {
+            form
+                .find('.actions')
+                .find('ul')
+                .addClass('nav justify-content-center pb-3')
+                .find('li')
+                .addClass('nav-item ml-1 mr-1')
+                .each(function () {
+                    var visible = $(this).is(":visible");
+                    if (visible) {
+                        $(this)
+                            .find('a')
+                            .addClass('btn bg-light-green text-white rounded-0 pl-4 pr-4 shadow');
+                    }
+                });
+
+            if ($('.actions hr').length == 0)
+                $('.actions').prepend('<hr class="border-dashed" />');
+        }
+
+        $('#waAddressSameAsBusinessAddress').change(function () {
+
+            if ($(this).is(':checked')) {
+
+                $('#RegionId, #CityId, #AreaId, #StreetAddress')
+                    .attr('disabled', true);
+
+                $('#CityId').html('');
+                $('#AreaId').html('');
+
+                $('#RegionId')
+                    .val($('#RegisterModel_RegionId').val())
+                    .trigger('change');
+
+                $('#StreetAddress, .StreetAddress').val($('#RegisterModel_StreetAddress').val());
+            } else {
+                $('#RegionId, #CityId, #AreaId, #StreetAddress')
+                    .removeAttr('disabled');
+            }
+
+        });
+
+        $('.return-address input[type="radio"]').change(function () {
+            $('.return-address .field-validation-valid').text('');
+        });
+
+        $('#RegisterModel_StreetAddress').keyup(function () {
+            if ($('#waAddressSameAsBusinessAddress').is(':checked')) {
+                var val = $(this).val();
+                $('#StreetAddress').val(val);
+                $('#StreetAddress').next().next().text('');
+            }
+            $('#RegisterModel_StreetAddress').next().next().text('');
+        });
+
+        var langKey = ALGOLIA_CONFIG.languageKey;
+        var emptyOption = '<option value="0">--- &nbsp; Select &nbsp; ---</option>';
+
+            function generateAddressOptions(selector, data, selectedVal) {
+                var el = $(selector);
+                //el.html(emptyOption);
+
+                $.each(data,
+                    function (id, option) {
+                        el.append($('<option></option>').val(option.Id)
+                            .html(langKey == 'en' ? option.Name : option.BnName));
+                    });
+
+                el.val(selectedVal);
+                setTimeout(function () {
+                    $(selector).trigger('change');
+                }, 300);
+            }
+
+            var selectedCountry = $('#RegisterModel_CountryId').val();
+            var url = `@(Url.RouteUrl("GetRegionsByCountryId"))?countryId=${selectedCountry}`;
+
+        $.get(url, function (resp) {
+            generateAddressOptions('#RegisterModel_RegionId', resp, `@Model.RegisterModel.RegionId`);
+            generateAddressOptions('#RegionId', resp, `@Model.RegionId`);
+        });
+
+
+
+            $('#RegisterModel_RegionId').change(function () {
+                var val = $(this).val();
+                $('.RegisterModel_RegionId').val(val).trigger('change');
+                if (val > 0) {
+                    $('#RegisterModel_CityId').html(emptyOption);
+                    $('#RegisterModel_AreaId').html(emptyOption);
+                    var url = `@(Url.RouteUrl("GetCitiesByRegionId"))?regionId=${val}`;
+                    $.get(url, function (resp) {
+                        generateAddressOptions('#RegisterModel_CityId', resp, `@Model.RegisterModel.CityId`);
+                    });
+                }
+            });
+
+            $('#RegisterModel_CityId').change(function () {
+                var val = $(this).val();
+                $('.RegisterModel_CityId').val(val).trigger('change');
+                if (val > 0) {
+                    $('#RegisterModel_AreaId').html(emptyOption);
+                    var url = `@(Url.RouteUrl("GetAreasByCityId"))?cityId=${val}`;
+                    $.get(url, function (resp) {
+                        generateAddressOptions('#RegisterModel_AreaId', resp, `@Model.RegisterModel.AreaId`);
+                    });
+                }
+            });
+
+        $('#RegisterModel_AreaId').change(function () {
+            var val = $(this).val();
+            $('.RegisterModel_AreaId').val(val).trigger('change');
+        });
+
+        $('#RegisterModel_StreetAddress').change(function () {
+            var val = $(this).val();
+            $('.RegisterModel_StreetAddress').val(val).trigger('change');
+        });
+
+            $('#RegionId').change(function () {
+                var val = $(this).val();
+                $('.RegionId').val(val).trigger('change');
+                if (val > 0) {
+                    $('#AreaId').html(emptyOption);
+                    var url = `@(Url.RouteUrl("GetCitiesByRegionId"))?regionId=${val}`;
+                    $.get(url, function (resp) {
+                        if ($('#waAddressSameAsBusinessAddress').is(':checked')) {
+                            generateAddressOptions('#CityId', resp, $('#RegisterModel_CityId').val());
+                        } else {
+                            generateAddressOptions('#CityId', resp, `@Model.CityId`);
+                        }
+                    });
+                }
+            });
+
+            $('#CityId').change(function () {
+                var val = $(this).val();
+                $('.CityId').val(val).trigger('change');
+                if (val > 0) {
+                    $('#AreaId').html(emptyOption);
+                    var url = `@(Url.RouteUrl("GetAreasByCityId"))?cityId=${val}`;
+                    $.get(url, function (resp) {
+                        if ($('#waAddressSameAsBusinessAddress').is(':checked')) {
+                            generateAddressOptions('#AreaId', resp, $('#RegisterModel_AreaId').val());
+                        } else {
+                            generateAddressOptions('#AreaId', resp, `@Model.AreaId`);
+                        }
+                    });
+
+                }
+            });
+
+        $('#AreaId').change(function () {
+            var val = $(this).val();
+            $('.AreaId').val(val).trigger('change');
+        });
+
+        $('#StreetAddress').change(function () {
+            var val = $(this).val();
+            $('.StreetAddress').val(val).trigger('change');
+        });
+
+        // Generate Phone Area Code
+        $.getJSON('/Themes/AgroMukam/Content/js/all.json', function (resp) {
+            let areaCodes = '';
+
+            for (var item of resp)
+                areaCodes += prepareAreCodeDropdownItem(item);
+
+            $('.phone-area-code-dropdown .dropdown-menu-items').html(areaCodes);
+            $('.phone-area-code-dropdown .btn-text').text(`(880) Bangladesh`);
+            $('#Phone').removeAttr('disabled');
+        });
+
+        $('.phone-area-code-dropdown').on('hidden.bs.dropdown', function () {
+            $('.dropdown-caret i', this).removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        });
+        $('.phone-area-code-dropdown').on('shown.bs.dropdown', function () {
+            $('.dropdown-caret i', this).removeClass('fa-chevron-down').addClass('fa-chevron-up');
+        });
+
+        // Phone Area Code Change/Select Event
+        $(document).on('click', '.phone-area-code-dropdown .dropdown-item', function () {
+            const txt = $(this).data('text');
+            const val = $(this).data('val');
+            $('.phone-area-code-dropdown .btn-text').text(`(${val}) ${txt}`);
+            $('#btnAreaCode').data('selected-area-code', val);
+            $('#areaCodeHelper').val(val);
+        });
+
+        // Phone Area Code Search
+        $('#searchAreaCode').keyup(function () {
+            const searchTerm = $(this).val();
+
+            if (searchTerm == '' || searchTerm.trim() == '') {
+                $('.phone-area-code-dropdown .dropdown-menu-items .dropdown-item').show();
+            } else {
+                $('.phone-area-code-dropdown .dropdown-menu-items .dropdown-item').each(function () {
+                    const itemText = $(this).find('.col').text().toLowerCase();
+                    itemText.includes(searchTerm.toLowerCase())
+                        ? $(this).addClass('d-flex').removeClass('d-none')
+                        : $(this).addClass('d-none').removeClass('d-flex');
+                });
+            }
+        });
+
+        // fix phone number auto correction for BD
+        $('#Phone').keyup(function (e) { removePrecedingDigits(e.target.value); });
+
+        // detect Phone number remote validation complete
+        // && enable or disable slide to unlock
+        $(document).ajaxComplete(function (event, xhr, settings) {
+            if (settings.url.includes(`@Url.RouteUrl("CheckPhoneNumberAvailability")`)) {
+                if ($('#Phone').hasClass('input-validation-error')) {
+                    $('#slideToVerify').addClass('is-disabled');
+                } else {
+                    $('#slideToVerify').removeClass('is-disabled');
+                }
+            }
+        });
+
+        // initialize slider (verification code)
+        function initializeSlideToUnlock(isDisabled) {
+            $("#slideToVerify")
+                .attr('class', isDisabled ? 'is-disabled' : '')
+                .html('')
+                .slideToUnlock({
+                    lockText: '@T("VendorRegistration.SlideToSendCode")',
+                    unlockText: '@T("VendorRegistration.VerificationCodeSent")',
+                    unlockfn: sendOtpCode,
+                    dependant: '#Phone'
+                });
+        }
+        initializeSlideToUnlock(true);
+
+        // I tried to 'slide' right after page load, without any input
+        // && it made NO sense!!!
+        //$('#slideToVerify').click(function () {
+        //    if ($(this).hasClass('is-disabled'))
+        //        $('#registrationForm').submit();
+        //});
+
+        // on successful slide
+        function sendOtpCode() {
+            //console.log('sending Otp');
+            var areaCode = $('#areaCodeHelper').val();
+            var phoneNumber = $('#Phone').val();
+            var url = `/Customer/SendOtpCode?phoneNumber=${areaCode}${phoneNumber}`;
+            //console.log('url', url);
+            $.post({
+                url: url,
+                headers: {
+                    "RequestVerificationToken": '@GetAntiXsrfRequestToken()'
+                },
+                success: function (data) {
+                    //console.log('data', data);
+                    if (data) {
+                        $('.slide-to-verify').hide().find('.val-msg').hide();
+                        $('.phone-verification-code').show('slow');
+                        beginOtpResendCountDown();
+                    } else {
+                        $('.failed-to-send-otp').show();
+                        setTimeout(function () {
+                            $('.failed-to-send-otp').hide();
+                            initializeSlideToUnlock();
+                        });
+                    }
+                },
+                error: function (err) {
+                    console.log('error', err);
+                }
+            });
+        }
+
+        function beginOtpResendCountDown() {
+            var deadline = new Date();
+            deadline.setMinutes(deadline.getMinutes() + 3);
+            otpCountDownInterval = setInterval(function () {
+                var now = new Date().getTime();
+                var t = deadline - now;
+                var minutes = Math.floor((t % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((t % (1000 * 60)) / 1000);
+                $('.resend-info').show().find('span').html(`${minutes}m ${seconds}s`);
+                if (t < 0) {
+                    clearInterval(otpCountDownInterval);
+                    $('.slide-to-verify').show('slow');
+                    $('.phone-verification-code').hide();
+                    $('.resend-info').hide();
+                    initializeSlideToUnlock();
+                }
+            }, 1000);
+        }
+
+        // enable 'click to verify' if field not empty
+        $('.phone-verification-code input').keyup(function (e) {
+            var value = e.target.value.trim();
+            if (value.length > 0) {
+                $('.phone-verification-code button').removeAttr('disabled');
+            } else {
+                $('.phone-verification-code button').attr('disabled', true);
+            }
+        });
+        // and validate OTP on 'click to verify'
+        $('.verify-otp').on('click', function () {
+            //console.log('validate Otp');
+            var areaCode = $('#areaCodeHelper').val();
+            var phoneNumber = $('#Phone').val();
+            var code = $('.phone-verification-code input').val();
+            var url = `/Customer/ValidateOtpCode?phoneNumber=${areaCode}${phoneNumber}&otpCode=${code}`;
+            $.post({
+                url: url,
+                headers: {
+                    "RequestVerificationToken": '@GetAntiXsrfRequestToken()'
+                },
+                success: function (data) {
+                    //console.log('data', data);
+                    if (data) {
+                        $('#UserNameHelper, #PhoneNumberHelper').val(`${areaCode}${phoneNumber}`);
+                        $('.slide-to-verify, .resend-info').hide();
+                        $('.phone-verification-code input, .phone-verification-code button')
+                            .attr('disabled', true)
+                            .data('verified', true);
+                        $('.phone-verification-code button')
+                            .text('Verified')
+                            .prepend('<i class="fas fa-check-circle mr-2"></i>');
+                        clearInterval(otpCountDownInterval);
+                    } else {
+                        $('.invalid-code-info').show('slow', function () {
+                            setTimeout(function () {
+                                $('.invalid-code-info').hide();
+                            }, 5000);
+                        });
+                    }
+                },
+                error: function (err) {
+                    console.log('error', err);
+                }
+            });
+        });
+
+        // partnership type
+        $('.partnership-type .card').click(function () {
+            $('.partnership-type .card').removeClass('active');
+            $(this).addClass('active');
+            const id = $(this).data('id');
+            if (id == 1) {
+                $('.commission-based .card-header i').removeClass('far fa-meh-blank').addClass('fas fa-smile-beam');
+                $('.subscription-based .card-header i').removeClass('fas fa-grin-stars').addClass('far fa-meh-rolling-eyes');
+            } else {
+                $('.commission-based .card-header i').removeClass('fas fa-smile-beam').addClass('far fa-meh-blank');
+                $('.subscription-based .card-header i').removeClass('far fa-meh-rolling-eyes').addClass('fas fa-grin-stars');
+            }
+
+
+        });
+
+        //
+        setTimeout(function () {
+            $('#RegisterModel_Email, #RegisterModel_Password').val('');
+        }, 1500);
+
+        //
+        $('.profile-verification .id-type select').change(function () {
+            const txt = $('option:selected', this).text();
+
+            if (txt.toLowerCase().includes('national id')) {
+                $('.name-on-id .lbl-txt').text('Name on ID');
+                $('.id-number .lbl-txt').text('ID Number');
+            }
+
+            if (txt.toLowerCase().includes('passport')) {
+                $('.name-on-id .lbl-txt').text('Name on Passport');
+                $('.id-number .lbl-txt').text('Passport Number');
+            }
+
+            if (txt.toLowerCase().includes('chairman')) {
+                $('.name-on-id .lbl-txt').text('Name on Chairman Certificate');
+                $('.id-number .lbl-txt').text('Certificate Serial Number');
+            }
+
+            if (txt.toLowerCase().includes('union porishod')) {
+                $('.name-on-id .lbl-txt').text('Name on Union Porishod Certificate');
+                $('.id-number .lbl-txt').text('Certificate Serial Number');
+            }
+        });
+
+        // little hack to fix: can't submit form whena account type = business
+        $(document).on('click', '.actions.buttons a.btn', function () {
+            if ($(this).attr('href').includes('finish')) {
+                var { errorList } = $('#vendorRegistrationForm').validate();
+                if (errorList.length == 1) {
+                    if ($(errorList[0].element).hasClass('custom-file-input')) {
+                        $(errorList[0].element).remove();
+                        $('#vendorRegistrationForm').submit();
+                    }
+                }
+            }
+        });
+
+    });
+</script>
+
+<script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.7.0/firebase-app.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.7.0/firebase-storage.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyA8Ul6x8CjgDS__bIaD5VZnrk6PGNwbXb8",
+        authDomain: "pikup-6b952.firebaseapp.com",
+        projectId: "pikup-6b952",
+        storageBucket: "pikup-6b952.appspot.com",
+        messagingSenderId: "846702173277",
+        appId: "1:846702173277:web:3dcfe69aecd572622241b4",
+        measurementId: "G-L5L8TE81MW"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+
+    async function uploadFileToFirebase(imageFile) {
+        const metadata = {
+            contentType: imageFile.name.type
+        };
+        const storage = getStorage();
+        const storageRef = ref(storage, "Images/" + imageFile.name);
+        try {
+            const snapshot = await uploadBytes(storageRef, imageFile, metadata);
+            //console.log('Uploaded a blob or file!', snapshot);
+            const downloadUrl = await getDownloadURL(snapshot.ref);
+            //console.log('url', downloadUrl);
+            return downloadUrl;
+        } catch (err) {
+            console.log('error uploadFileToFirebase', err);
+            return '';
+        }
+
+    }
+
+    async function uploadFiles() {
+        //console.log(`${$('input[type="file"]').length} files to upload....`);
+        for (const el of $('input[type="file"]').toArray()) {
+            const files = $(el).prop('files');
+            if (files.length > 0) {
+                try {
+                    const resp = await uploadFileToFirebase(files[0]);
+                    //console.log('resp', resp);
+                    const ref = $(el).attr('data-ref');
+                    $(`#${ref}`).val(resp.substr(0, resp.lastIndexOf("&"))).trigger('change');
+                    //console.log('attr val', $(`#${ref}`).val());
+                }
+                catch(err) {
+                    console.log('failed to upload files', err);
+                }
+            }
+        }
+        return true;
+    }
+
+    $('#vendorRegistrationForm').submit(function (e) {
+        //console.log('form submitted (e)');
+        $('.form-processing-loader').show();
+        e.preventDefault();
+        uploadFiles()
+            .then(resp => {
+                //console.log('all file upload complete', resp);
+                const form = $('#vendorRegistrationForm');
+                const actionUrl = form.attr('action');
+                const body = form.serialize();
+
+                $.ajax({
+                    type: "POST",
+                    url: actionUrl,
+                    data: body, // serializes the form's elements.
+                    success: function (data) {
+                        console.log('registration success');
+                        setLocation('@Url.RouteUrl("VendorRegistrationResult")');
+                    },
+                    error: function (error) {
+                        console.log('error', error);
+                        $('.form-processing-loader').hide();
+                    }
+                });
+            })
+            .catch(err => {
+                console.log('upload file error', err);
+            });
+    });
+
+</script>

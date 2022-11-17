@@ -1,0 +1,45 @@
+﻿@model ProductDetailsModel
+@{
+    Html.AddScriptParts(ResourceLocation.Footer, "~/Themes/AgroMukam/Content/js/smoothproducts.min.js");
+    Html.AddCssFileParts("~/Themes/AgroMukam/Content/css/smoothproducts.css");
+}
+<style>
+    .sp-thumbs {
+        margin-top: 15px;
+    }
+
+    .sp-large a img {
+        height: 100% !important;
+    }
+
+    @@media all and (min-width: 992px) {
+        .sp-loading,
+        .sp-large {
+            height: 400px !important;
+        }
+    }
+</style>
+<div class="gallery">
+    @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ProductDetailsBeforePictures, additionalData = Model })
+
+    <div class="sp-loading w-100"><img src="/Themes/AgroMukam/Content/images/ajax-loader-small.gif" alt=""><br>LOADING IMAGES</div>
+    <div class="sp-wrap w-100">
+        @foreach (var picture in Model.PictureModels)
+        {
+            <a href="@picture.FullSizeImageUrl"
+               alt="@picture.AlternateText"
+               title="@picture.Title">
+                <img src="@picture.FullSizeImageUrl"
+                     alt="@picture.AlternateText"
+                     title="@picture.Title" />
+            </a>
+        }
+    </div>
+    <script asp-location="Footer">
+        $(document).ready(function () {
+            $('.sp-wrap').smoothproducts();
+        });
+    </script>
+
+    @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ProductDetailsAfterPictures, additionalData = Model })
+</div>

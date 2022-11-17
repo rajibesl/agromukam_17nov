@@ -1,0 +1,51 @@
+﻿@model Nop.Web.Models.Customer.CustomerWishResponseCreateModel
+
+@{
+    ViewData["Title"] = "CustomerWishResponse";
+}
+@{
+    Layout = "_ColumnsOne";
+}
+<h2>CustomerWishResponse</h2>
+
+<h4>CustomerWishResponseCreateModel</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="CreateResponse">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <h4>
+                Request Id = @Model.RequestId
+            </h4>
+            <input asp-for="RequestId" type="hidden" />
+            <div class="form-group">
+                <label asp-for="CommentText" class="control-label"></label>
+                <input asp-for="CommentText" class="form-control" />
+                <span asp-validation-for="CommentText" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ProposedPrice" class="control-label"></label>
+                <input asp-for="ProposedPrice" class="form-control" />
+                <span asp-validation-for="ProposedPrice" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DeliveryStartDateUtc" class="control-label"></label>
+                <input asp-for="DeliveryStartDateUtc" class="form-control" />
+                <span asp-validation-for="DeliveryStartDateUtc" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="DeliveryEndDateUtc" class="control-label"></label>
+                <input asp-for="DeliveryEndDateUtc" class="form-control" />
+                <span asp-validation-for="DeliveryEndDateUtc" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-default" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+

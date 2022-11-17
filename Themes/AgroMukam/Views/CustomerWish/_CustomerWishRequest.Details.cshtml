@@ -1,0 +1,46 @@
+﻿@model CustomerWishRequestDetailsModel
+@inject Nop.Services.Customers.ICustomerService _customerService
+@inject Nop.Core.IWorkContext _workContext 
+
+<div class="card border-0 rounded-0 shadow-sm">
+    <div class="card-body">
+        <span class="d-block text-muted">
+            <small>
+                <i class="far fa-calendar-alt"></i>
+                Posted On:
+                @Model.RequestDetails.CreatedOnUtc.ToString("dd MMMM yyyy hh: mm tt")
+            </small>
+        </span>
+
+        <h2 class="text-success mt-2 mb-2"> @Model.RequestDetails.Title </h2>
+        <span class="d-block text-muted pl-2">
+            <small>
+                <i class="far fa-money-bill" style="width: 20px;"></i>
+                Expected Price
+                @Model.RequestDetails.ExpectedPrice.ToString("#0.00")
+            </small>
+        </span>
+        <span class="d-block text-muted mt-1 pl-2">
+            <small>
+                <i class="far fa-calendar-check" style="width: 20px;"></i>
+                Expected Delivery Before: 
+                @Model.RequestDetails.ExpectedDeliveryBeforeDateUtc.ToString("dd MMMM yyyy hh: mm tt")
+            </small>
+        </span>
+
+        <h4 class="font-weight-light mt-2"> @Model.RequestDetails.Details </h4>
+
+        @if (await _customerService.IsVendorAsync(await _workContext.GetCurrentCustomerAsync()))
+        {
+            <div class="submit-response-wrap mt-4">
+                @await Html.PartialAsync("_SubmitResponse")
+            </div>
+        }
+
+        <div class="response-list mt-3">
+            <div class="d-flex justify-content-center align-items-center" style="height: 250px;"><div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div></div>
+        </div>
+
+    </div>
+
+</div>

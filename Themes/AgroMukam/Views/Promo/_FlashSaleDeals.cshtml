@@ -1,0 +1,19 @@
+﻿@model FlashSaleProductModel
+<div class="item-grid d-flex flex-row flex-wrap">
+    @if (Model.Products.Count > 0)
+    {
+        @foreach (var product in Model.Products)
+        {
+            <div class="item-box add-border px-1 py-1 col-12 col-sm-6 col-lg-4 col-xl-3 col-xlg-2">
+                @await Html.PartialAsync("_ProductBox", product)
+            </div>
+        }
+        <input type="hidden" id="countdownDate" value="@Model.Discounts.FirstOrDefault().EndDateUtc" />
+    }
+    else
+    {
+        <div class="col">
+            <h4> No Flash sale deal found, please check back later </h4>
+        </div>
+    }
+</div>

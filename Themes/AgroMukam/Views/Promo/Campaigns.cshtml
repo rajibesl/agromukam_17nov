@@ -1,0 +1,62 @@
+﻿@{
+    Layout = "_ColumnsTwo";
+}
+
+@section Breadcrumb
+{
+    <section class="common-breadcrumb">
+        <nav>
+            <div class="container-fluid">
+                <ol class="breadcrumb justify-content-center mb-0">
+                    <li class="breadcrumb-item"><a href="/" title="Home">Home</a></li>
+                    <li class="breadcrumb-item">
+                        <a href="@Url.RouteUrl("Promotions")" title="HaatBazar">
+                            Promotions
+                        </a>
+                    </li>
+                    <li class="breadcrumb-item active">
+                        <strong class="current-item">Campaigns</strong>
+                    </li>
+                </ol>
+            </div>
+        </nav>
+    </section>
+}
+
+@section left
+{
+    <div class="filter-group m-0 p-0">
+        <header class="card-header p-2">
+            <a href="#" data-toggle="collapse" data-target="#collapse"
+               aria-expanded="true">
+                <i class="icon-control fa fa-chevron-down"></i>
+                <h6 class="text-deep-green">Filtering</h6>
+            </a>
+        </header>
+        <div class="filter-content filtersGroupPanel collapse show" id="collapse">
+            <div class="card-body p-4">
+                <span> Coming soon... </span>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="page campaigns-page">
+    <div class="page-body">
+        <div class="card">
+            <div class="card-body">
+                <p> Fetching campaigns, sit tight... </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script asp-location="Footer">
+    $(document).ready(function () {
+        $.get('/Promo/CampaignsAjax', function (data) {
+            if (data) {
+                $('.campaigns-page .page-body').html(data);
+            }
+        });
+    });
+</script>

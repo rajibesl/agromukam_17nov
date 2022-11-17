@@ -1,0 +1,43 @@
+﻿
+@model IList<CustomerWishRequestListModel>
+@{
+    Layout = "_ColumnsOne";
+}
+
+
+
+<div class="product-specs-box">
+    <div class="title">
+        <strong> Customer Wish Request List </strong>
+    </div>
+    <div class="table-wrapper p-3">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th class="p-3 text-left">Date</th>
+                    <th class="p-3 text-left">Request</th>
+                    <th class="p-3 text-left">Category</th>
+                    <th class="p-3 text-left">Expected Date</th>
+                    <th class="p-3 text-left">Expected Price</th>
+                    <th class="p-3 text-left">#</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr class="border-bottom">
+                        <td class="pt-2 pb-2">@item.CreatedOnUtc.ToString("dd/mm/yyyy")</td>
+                        <td class="pt-2 pb-2">@item.Title</td>
+                        <td class="pt-2 pb-2">@item.CategoryName</td>
+                        <td class="pt-2 pb-2">@item.ExpectedDeliveryBeforeDateUtc.ToString("dd/mm/yyyy")</td>
+                        <td class="pt-2 pb-2">@item.ExpectedPrice.ToString("#.00")</td>
+                        <td class="pt-2 pb-2">
+                            <a href="@Url.RouteUrl("CustomerWishResponse", new {wishRequestId = item.Id})" class="btn btn-secondary btn-sm">Respond</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+

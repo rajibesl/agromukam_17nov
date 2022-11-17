@@ -1,0 +1,144 @@
+﻿@using Nop.Core
+@model CustomerInfoModel
+@inject Nop.Core.IWebHelper webHelper
+@inject Nop.Core.IWorkContext _workContext
+@inject Nop.Services.Customers.ICustomerService _customerService
+@{
+    Layout = "_ColumnsTwo";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.Account").Text);
+    //page class
+    Html.AppendPageCssClassParts("html-account-page");
+    Html.AppendPageCssClassParts("html-customer-info-page");
+}
+
+@section left
+    {
+    @await Html.PartialAsync("_CustomerNavigation", "my-profile")
+    @*@await Component.InvokeAsync("CustomerNavigation", new { selectedTabId = CustomerNavigationEnum.Info })*@
+}
+
+@{
+    var accountType = String.Empty;
+    var isVendor = await _customerService.IsVendorAsync(await _workContext.GetCurrentCustomerAsync());
+
+    if (isVendor)
+    {
+        accountType = "Vendor";
+    }
+    else
+    {
+        var accountTypeAttr = Model.CustomerAttributes.FirstOrDefault(x => x.Name.Contains("Account Type"));
+        if (accountTypeAttr != null)
+        {
+            var actType = accountTypeAttr.Values.FirstOrDefault(x => x.IsPreSelected);
+            if (actType != null)
+                accountType = actType.Name;
+        }
+    }
+
+
+}
+
+<div class="page account-page customer-info-page">
+    <div class="p-title">
+        <h5> @T("MyAccount.MyProfile") </h5>
+    </div>
+    <div class="page-body pt-3">
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-body" style="max-width: 768px;">
+                <form asp-route="CustomerInfo" method="post">
+                    <div asp-validation-summary="ModelOnly" class="message-error"></div>
+
+                    <div class="form-group row">
+                        <label for="actType" class="col-sm-3 col-form-label"> @T("MyAccount.MyProfile.AccountType"): </label>
+                        <div class="col-sm-9">
+                            <p class="pt-1"> @accountType </p>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="actType" class="col-sm-3 col-form-label"> @T("MyAccount.MyProfile.Username"): </label>
+                        <div class="col-sm-9">
+                            <p class="pt-1"> @Model.Username </p>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label asp-for="FirstName" class="col-sm-3 col-form-label"></label>
+                        <div class="col-sm-9">
+                            <input asp-for="FirstName" class="form-control" />
+                            <span asp-validation-for="FirstName"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label asp-for="LastName" class="col-sm-3 col-form-label"></label>
+                        <div class="col-sm-9">
+                            <input asp-for="LastName" class="form-control" />
+                            <span asp-validation-for="LastName"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label asp-for="Email" class="col-sm-3 col-form-label"></label>
+                        <div class="col-sm-9">
+                            <input asp-for="Email" class="form-control" />
+                            <span asp-validation-for="Email"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label asp-for="Gender" class="col-sm-3 col-form-label"></label>
+                        <div class="col-sm-9">
+                            <div class="gender">
+                                <span class="male">
+                                    <div class="forcheckbox custom-control custom-radio">
+                                        <input type="radio" asp-for="Gender" value="M" class="custom-control-input" checked="@(Model.Gender == "M")" id="gender-male" />
+                                        <label class="custom-control-label" for="gender-male">@T("Account.Fields.Gender.Male")</label>
+                                    </div>
+                                </span>
+                                <span class="female">
+                                    <div class="forcheckbox custom-control custom-radio">
+                                        <input type="radio" asp-for="Gender" value="F" class="custom-control-input" checked="@(Model.Gender == "F")" id="gender-female" />
+                                        <label class="custom-control-label" for="gender-female">@T("Account.Fields.Gender.Female")</label>
+                                    </div>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="buttons">
+                        <input type="submit" id="save-info-button" value="@T("Common.Save")" name="save-info-button" class="btn bg-light-green text-white save-customer-info-button" />
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script asp-location="Footer">
+    console.log(JSON.parse(`@Json.Serialize(Model)`));
+    function removeexternalassociation(itemId) {
+        if (confirm('@T("Common.AreYouSure")')) {
+            var postData = {
+                id: itemId
+            };
+            addAntiForgeryToken(postData);
+            $.ajax({
+                cache: false,
+                type: "POST",
+                url: "@Url.Action("RemoveExternalAssociation", "Customer")",
+                data: postData,
+                dataType: "json",
+                success: function (data, textStatus, jqXHR) {
+                    location.href = data.redirect;
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    alert('Failed to delete');
+                }
+            });
+        }
+        return false;
+    }
+</script>

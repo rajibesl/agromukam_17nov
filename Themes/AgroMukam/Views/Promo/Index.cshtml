@@ -1,0 +1,62 @@
+﻿
+@{
+    Layout = "_ColumnsOne";
+}
+
+<section class="common-breadcrumb">
+    <nav>
+        <div class="container-fluid">
+            <ol class="breadcrumb justify-content-center mb-0">
+                <li class="breadcrumb-item"><a href="/" title="Home">Home</a></li>
+                <li class="breadcrumb-item active">
+                    <strong class="current-item">Promotions</strong>
+                </li>
+            </ol>
+        </div>
+    </nav>
+</section>
+
+<div class="page promo-page">
+    <div class="page-body container pt-5 pb-5">
+        <div class="row">
+
+            <div class="col-12">
+                <div class="card-banner cursor-pointer" onclick="setLocation('@Url.RouteUrl("FlashSaleDeals")')"
+                     style="height:220px; background-image: url('/Themes/AgroMukam/Content/images/flash-sale.jpg');">
+                    <article class="card-body text-center pt-5 bg-gradient-green text-white">
+                        <h2 class="card-title text-white pt-4">Flash Sale Deals</h2>
+                        <h4 class="text-white">Updated Daily</h4>
+                    </article>
+                </div>
+            </div>
+
+            <div class="col-12 mt-3">
+                <div class="card-banner cursor-pointer" onclick="setLocation('@Url.RouteUrl("FeaturedProducts")')"
+                     style="height:220px; background-image: url('/Themes/AgroMukam/Content/images/howdangerous.jpg');">
+                    <article class="card-body text-center pt-5 bg-gradient-green text-white">
+                        <h2 class="card-title text-white pt-4">Featured Products</h2>
+                    </article>
+                </div>
+            </div>
+
+            <div class="col-12 mt-3">
+                <div class="card-banner cursor-pointer" onclick="setLocation('@Url.RouteUrl("ProductsWithDiscount")')"
+                     style="height:220px; background-image: url('/Themes/AgroMukam/Content/images/gardening.jpg');">
+                    <article class="card-body text-center pt-5 bg-gradient-green text-white">
+                        <h2 class="card-title text-white pt-4">Discounts</h2>
+                    </article>
+                </div>
+            </div>
+
+            <div class="col-12 mt-3">
+                <div class="card-banner cursor-pointer" onclick="setLocation('@Url.RouteUrl("Campaigns")')"
+                     style="height:220px; background-image: url('/Themes/AgroMukam/Content/images/goat.jpg');">
+                    <article class="card-body text-center pt-5 bg-gradient-green text-white">
+                        <h2 class="card-title text-white pt-4">Campaigns</h2>
+                    </article>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

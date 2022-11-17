@@ -1,0 +1,69 @@
+﻿@model ProductDetailsModel.ProductPriceModel
+@using Nop.Core
+@using Nop.Core.Domain.Tax
+@inject IWorkContext workContext
+
+@functions {
+    public int GetDiscountPercentage(string oldPrice, string newPrice)
+    {
+        var x = Decimal.Parse(oldPrice.Replace('৳', ' ').Replace('$', ' '));
+        var y = Decimal.Parse(newPrice.Replace('৳', ' ').Replace('$', ' '));
+        return (int)Math.Round(((x - y) / x) * 100);
+    }
+}
+
+@if (!Model.CustomerEntersPrice)
+{
+    <div class="prices mt-4 border-top-muted border-bottom-muted pt-3 pb-3">
+        @if (Model.CallForPrice)
+        {
+            @*call for price*@
+            <div class="product-price call-for-price">
+                <span class="h4 text-primary">@T("Products.CallForPrice")</span>
+            </div>
+        }
+        else
+        {
+            if (Model.IsRental)
+            {
+                <div class="rental-price">
+                    <label>@T("Products.Price.RentalPrice"):</label>
+                    <span>@Model.RentalPrice</span>
+                </div>
+            }
+
+            <div class="product-price">
+                <div class="product-price">
+                    <span class="h3 text-light-green price-value-@Model.ProductId"> @(Model?.PriceWithDiscount ?? Model.Price) </span>
+                </div>
+            </div>
+
+            <div class="old-product-price text-muted-x">
+
+                @if (!string.IsNullOrEmpty(Model.PriceWithDiscount))
+                {
+                    <span>
+                        <del> @Model.Price </del>
+                    </span>
+                    <span class="ml-2">
+                        -@GetDiscountPercentage(Model.Price, Model.PriceWithDiscount)%
+                    </span>
+                }
+                else
+                {
+                    if (!string.IsNullOrEmpty(Model.OldPrice))
+                    {
+                        <span>
+                            <del> @Model.OldPrice </del>
+                        </span>
+                        <span class="ml-2">
+                            -@GetDiscountPercentage(Model.OldPrice, Model.Price)%
+                        </span>
+                    }
+                }
+
+            </div>
+
+        }
+    </div>
+}

@@ -1,0 +1,43 @@
+﻿@model ProductDetailsModel.FlashSaleDetailsModel
+
+<style>
+    .flash-sale-banner {
+        width: 460px;
+    }
+</style>
+
+<div class="flash-sale-banner border-light-green p-2">
+    
+    <div class="d-flex flex-row">
+        <div class="border">
+            Left
+        </div>
+        <div class="flex-grow-1 border">
+            Timer
+        </div>
+        <div class="flex-grow-1 border">
+            @Model.ItemsSold Sold
+        </div>
+        <div class="border">
+            <div class="progress">
+                @{
+                    var percentage = @Model.SellingProgressPercentage + "%";
+                }
+                <div class="progress-bar bg-light-green" role="progressbar" style="width: @percentage" aria-valuenow="@Model.SellingProgressPercentage" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+    </div>
+
+    
+    
+    
+    
+    @*<div class="fsb-text">
+        <a href="@Url.RouteUrl("FlashSaleProducts")">
+            Fla<i class="fas fa-bolt ml-1 mr-1" style="margin-left: 2px;margin-right: 2px;"></i><span class="text-lowercase">h</span> Sale
+        </a>
+    </div>
+    <div class="fsb-timer">
+        End in: <span id="demo"></span>
+    </div>*@
+</div>

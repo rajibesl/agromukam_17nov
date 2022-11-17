@@ -1,0 +1,258 @@
+﻿@model NegotiableOrderSearchModel
+@using Nop.Core.Domain.Orders
+@using Nop.Core.Domain.Payments
+@using Nop.Core.Domain.Shipping
+@using Nop.Web.Framework
+@using Nop.Services
+@{
+    //page title
+    ViewBag.Title = T("Admin.Sales.NegotiableOrder").Text;
+    //active menu item (system name)
+    Html.SetActiveMenuItemSystemName("NegotiableOrders");
+}
+
+@{
+    const string hideSearchBlockAttributeName = "OrdersPage.HideSearchBlock";
+    var hideSearchBlock = await genericAttributeService.GetAttributeAsync<bool>
+        (await workContext.GetCurrentCustomerAsync(), hideSearchBlockAttributeName);
+}
+
+<nop-antiforgery-token />
+<div class="content-header clearfix">
+    <h1 class="pull-left">
+        @T("Admin.Sales.NegotiableOrder")
+    </h1>
+</div>
+<div class="content">
+    <div class="form-horizontal">
+        <div class="panel-group">
+
+            <div class="panel panel-default panel-search">
+
+                <div class="panel-body">
+                    <form asp-controller="NegotiableOrder" asp-action="List" method="post">
+                        <div class="row search-row @(!hideSearchBlock ? "opened" : "")" data-hideAttribute="@hideSearchBlockAttributeName">
+                            <div class="search-text">@T("Admin.Common.Search")</div>
+                            <div class="icon-search"><i class="fa fa-search" aria-hidden="true"></i></div>
+                            <div class="icon-collapse"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
+                        </div>
+
+                        <div class="search-body @(hideSearchBlock ? "closed" : "")">
+                            <div class="row">
+
+                                <div class="col-md-6">
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="DateFromUtc" />
+                                        </div>
+                                        <div class="col-md-8">
+                                            <nop-editor asp-for="DateFromUtc" />
+                                        </div>
+                                    </div>
+                                </div>
+                                @*  *@
+                                <div class="col-md-6">
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="DateToUtc" />
+                                        </div>
+                                        <div class="col-md-8">
+                                            <nop-editor asp-for="DateToUtc" />
+                                        </div>
+                                    </div>
+                                </div>
+                                @*  *@
+                                <div class="col-md-6">
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="OrderNumber" />
+                                        </div>
+                                        <div class="col-md-8">
+                                            <nop-editor asp-for="OrderNumber" />
+                                        </div>
+                                    </div>
+                                </div>
+                                @*  *@
+                                <div class="col-md-6">
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="OrderStatus" />
+                                        </div>
+                                        <div class="col-md-8">
+                                            <nop-select asp-for="OrderStatus" asp-items="@(await ((OrderStatus) Model.OrderStatus).ToSelectListAsync())" />
+                                        </div>
+                                    </div>
+                                </div>
+                                @*  *@
+                                <div class="col-md-6">
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="PaymentStatus" />
+                                        </div>
+                                        <div class="col-md-8">
+                                            <nop-select asp-for="PaymentStatus" asp-items="@(await ((PaymentStatus) Model.PaymentStatus).ToSelectListAsync())" />
+                                        </div>
+                                    </div>
+                                </div>
+                                @*  *@
+                                <div class="col-md-6">
+                                    <div class="form-group row">
+                                        <div class="col-md-4">
+                                            <nop-label asp-for="ShippingStatus" />
+                                        </div>
+                                        <div class="col-md-8">
+                                            <nop-select asp-for="ShippingStatus" asp-items="@(await ((ShippingStatus) Model.ShippingStatus).ToSelectListAsync())" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                            <div class="row">
+                                <div class="col-md-7 col-md-offset-5">
+                                    <button type="button" id="search-negotiable-orders" class="btn btn-primary btn-search">
+                                        <i class="fa fa-search"></i>
+                                        @T("Admin.Common.Search")
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    @await Html.PartialAsync("Table", new DataTablesModel
+                    {
+                        Name = "negotiable-orders-grid",
+                        UrlRead = new DataUrl("List", "NegotiableOrder", null),
+                        SearchButtonId = "search-negotiable-orders",
+                        Length = Model.PageSize,
+                        LengthMenu = Model.AvailablePageSizes,
+                        Filters = new List<FilterParameter> {
+                            new FilterParameter(nameof(Model.OrderNumber)),
+                            new FilterParameter(nameof(Model.DateFromUtc)),
+                            new FilterParameter(nameof(Model.DateToUtc)),
+                            new FilterParameter(nameof(Model.OrderStatus)),
+                            new FilterParameter(nameof(Model.PaymentStatus)),
+                            new FilterParameter(nameof(Model.ShippingStatus)),
+                    },
+                        ColumnCollection = new List<ColumnProperty>
+                            {
+                        new ColumnProperty(nameof(NegotiableOrderItemModel.GeneratedOrderNumber))
+                        {
+                            Title = T("Admin.Sales.NegotiableOrders.Fields.OrderNumber").Text,
+                            Render = new RenderCustom("markRowGroupHeader")
+                        },
+                        new ColumnProperty(nameof(NegotiableOrderItemModel.ProductName))
+                        {
+                            Title = T("Admin.Sales.NegotiableOrders.Fields.ProductName").Text,
+                            Width = "250"
+                        },
+                       new ColumnProperty(nameof(NegotiableOrderItemModel.Customer))
+                        {
+                            Title = T("Admin.Sales.NegotiableOrders.Fields.Customer").Text
+                        },
+                        new ColumnProperty(nameof(NegotiableOrderItemModel.OrderStatus))
+                        {
+                            Title = T("Admin.Sales.NegotiableOrders.Fields.OrderStatus").Text,
+                            Render = new RenderCustom("prepareStatusColumn")
+                        },
+                        new ColumnProperty(nameof(NegotiableOrderItemModel.PaymentStatus))
+                        {
+                            Title = T("Admin.Sales.NegotiableOrders.Fields.PaymentStatus").Text,
+                            Render = new RenderCustom("prepareStatusColumn")
+                        },
+                        new ColumnProperty(nameof(NegotiableOrderItemModel.ShippingStatus))
+                        {
+                            Title = T("Admin.Sales.NegotiableOrders.Fields.ShippingStatus").Text,
+                            Render = new RenderCustom("prepareStatusColumn")
+                        },
+                        new ColumnProperty(nameof(NegotiableOrderItemModel.CreatedOnUtc))
+                        {
+                            Title = T("Admin.Sales.NegotiableOrders.Fields.CreatedOnUtc").Text,
+                            Render = new RenderDate()
+                        },
+                        new ColumnProperty(nameof(NegotiableOrderItemModel.Id))
+                        {
+                            Title = T("Admin.Common.Edit").Text,
+                            Width = "100",
+                            ClassName =  NopColumnClassDefaults.Button,
+                            Render = new RenderButtonEdit(new DataUrl("Edit"))
+                        }
+                    }
+                })
+                </div>
+
+                <script>
+
+                    const statusDefinitions = {
+                        Pending: 'label-default',
+                        Processing: 'label-primary',
+                        Complete: 'label-success',
+                        Cancelled: 'label-danger',
+                        Authorized: 'label-success',
+                        Paid: 'label-success',
+                        Refunded: 'label-warning',
+                        PartiallyRefunded: 'label-warning',
+                        Voided: 'label-danger',
+                        NotYetShipped: 'label-default',
+                        PartiallyShipped: 'label-primary',
+                        Shipped: 'label-primary',
+                        Delivered: 'label-success'
+                    };
+
+                    const throupHeaderStyle = "background-color: #f1f1f1;color:#808080;";
+                    var indexer;
+
+                    function markRowGroupHeader(data, type, row, meta) {
+                        const orderId = row.GeneratedOrderNumber;
+                        var text = data;
+
+                        if (orderId != indexer) {
+                            text = `<span data-order-id='${orderId}'> ${text} </span>`;
+                            indexer = orderId;
+                        }
+
+                        return text;
+                    }
+
+                    function insertRowGroupHeader(elem) {
+                        const parentRow = $(elem).parent().parent();
+                        const orderId = $(elem).data('order-id');
+                        $(`<tr style="${throupHeaderStyle}">
+                                                                    <td colspan="8"> Order #${orderId} </td>
+                                                            </tr>`).insertBefore(parentRow);
+                    }
+
+                    function prepareStatusColumn(data, type, row, meta) {
+                        const className = statusDefinitions[data];
+                        return `<span class="label ${className}">${data}</span>`;
+                    }
+
+                    // insert empty option for filtering: All
+                    const option = '<option value="0" selected> All </option>';
+                    $('.panel-search select').each(function () {
+                        $(this).prepend(option);
+                    });
+
+                    $(document).ready(function () {
+
+                        $('#negotiable-orders-grid_wrapper')
+                            .on('draw.dt', function () {
+                                indexer = '';
+                                $('tr td span[data-order-id]')
+                                    .each(function () {
+                                        insertRowGroupHeader(this);
+                                    });
+                            });
+
+                    });
+
+
+                </script>
+
+            </div>
+        </div>
+    </div>
+</div>

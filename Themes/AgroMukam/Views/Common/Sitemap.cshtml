@@ -1,0 +1,77 @@
+﻿@model SitemapModel
+@{
+    Layout = "_ColumnsOne";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.Sitemap").Text);
+    //page class
+    Html.AppendPageCssClassParts("html-sitemap-page");
+}
+
+<style>
+    .entity-item {
+        background: #f1f1f1 !important;
+        transition: .3s all ease-in-out;
+    }
+
+        .entity-item a {
+            color: #343a40;
+            text-decoration: none !important;
+        }
+
+        .entity-item:hover {
+            background: rgba(105, 164, 31, 1) !important;
+        }
+
+            .entity-item:hover a {
+                color: #fff !important;
+            }
+</style>
+
+<div class="page topic-page" id="ph-topic">
+    <div class="page-body container-lg pt-3" style="min-height: 420px;">
+        <div class="text-center">
+            <h4 class="text-light-green"> @T("Sitemap") </h4>
+            <span>@T("Sitemap.Description")</span>
+            <hr />
+        </div>
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.SitemapBefore })
+
+        @foreach (var itemGroup in Model.Items.GroupBy(itemGroup => itemGroup.GroupTitle))
+        {
+            <div class="entity card mb-3 rounded-0">
+                <div class="entity-title card-header">
+                    <h6 class="font-weight-bold">@itemGroup.Key</h6>
+                </div>
+                <div class="entity-body card-body p-2">
+                    <div class="d-flex flex-row flex-wrap justify-content-center">
+                        @foreach (var item in itemGroup.ToList())
+                        {
+                            if (!string.IsNullOrEmpty(item.Url))
+                            {
+                                <div class="d-flex bg-white m-1 justify-content-center align-items-center shadow-sm entity-item">
+                                    <a href="@item.Url" class="py-1 px-3">
+                                        @item.Name
+                                    </a>
+                                </div>
+                            }
+                        }
+
+                    </div>
+                </div>
+            </div>
+        }
+
+        @{
+            var pager = Html.Pager(Model.PageModel).QueryParam("pagenumber");
+            if (!(await pager.IsEmpty()))
+            {
+                <div class="pager Page navigation d-flex justify-content-center align-items-center">
+                    @pager
+                </div>
+            }
+        }
+
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.SitemapAfter })
+    </div>
+</div>

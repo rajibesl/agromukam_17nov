@@ -1,0 +1,121 @@
+﻿@using Nop.Core
+@using Nop.Core.Domain.Tax
+@using Nop.Services.Configuration
+
+@model FooterModel
+
+@inject IWorkContext workContext
+@inject IStoreContext storeContext
+@inject ISettingService settingService
+@inject IWebHelper webHelper
+@{
+    var isLoggedIn = !String.IsNullOrEmpty((await workContext.GetCurrentCustomerAsync()).Email);
+    var loginUrl = Url.RouteUrl("VendorLogin", new { returnUrl = this.Context.Request.Query["returnUrl"] }, webHelper.GetCurrentRequestProtocol());
+    var vendorLoginUrl = isLoggedIn ? "/Admin" : loginUrl;
+    var facebookLink = await settingService.GetSettingByKeyAsync<string>("storeinformationsettings.facebooklink");
+    var twitterLink = await settingService.GetSettingByKeyAsync<string>("storeinformationsettings.twitterlink");
+    var youtubeLink = await settingService.GetSettingByKeyAsync<string>("storeinformationsettings.youtubelink");
+
+}
+<footer class="section-footer border-top bg-white position-relative">
+    <div class="container-fluid">
+        <section class="footer-top padding-y">
+            <div class="row">
+                <aside class="col-md-3">
+                    <article class="mr-3">
+                        @await Component.InvokeAsync("Logo")
+
+                        <div class="mt-2">
+                            <a class="btn btn-icon btn-light"
+                               title="Facebook"
+                               target="_blank"
+                               href="@facebookLink">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a class="btn btn-icon btn-light"
+                               title="Twitter"
+                               target="_blank"
+                               href="@twitterLink">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            <a class="btn btn-icon btn-light"
+                               title="Youtube"
+                               target="_blank"
+                               href="@youtubeLink">
+                                <i class="fab fa-youtube"></i>
+                            </a>
+                        </div>
+                    </article>
+                </aside>
+                <aside class="col-md-3">
+                    <div class="title">
+                        <strong>@T("Footer.KnowUsBetter")</strong>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="/about-us" class="nav-link">@T("Footer.KnowUsBetter.AboutUs")</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/why-agromukam" class="nav-link">@T("Footer.KnowUsBetter.WhyAgroMukam")</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.RouteUrl("ContactUs")" class="nav-link">@T("Footer.KnowUsBetter.ContactUs")</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/how-referral-works" class="nav-link">@T("Footer.KnowUsBetter.HowReferralWorks")</a>
+                        </li>
+                    </ul>
+                </aside>
+                <aside class="col-md-3">
+                    <div class="title">
+                        <strong>@T("Footer.OurPolicies")</strong>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="/privacy-notice" class="nav-link">@T("Footer.OurPolicies.PrivacyPolicy")</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/shipping-returns" class="nav-link">@T("Footer.OurPolicies.ShippingDelivery")</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/refund-policy" class="nav-link">@T("Footer.OurPolicies.RefundPolicy")</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/faq" class="nav-link">@T("Footer.OurPolicies.FAQ")</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/terms-and-conditions" class="nav-link">@T("Footer.OurPolicies.TermsAndConditions")</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/cookies-policy" class="nav-link">@T("Footer.OurPolicies.CookiesPolicy")</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/disclaimer" class="nav-link">@T("Footer.OurPolicies.Disclaimer")</a>
+                        </li>
+                    </ul>
+                </aside>
+                <aside class="col-md-3">
+                    <div class="title">
+                        <strong>@T("Footer.Services")</strong>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a href="/vendor-registration" class="nav-link">@T("Footer.Services.SellOnAgroMukam")</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/advisor-registration" class="nav-link">@T("Footer.Services.BecomeAnAdvisor")</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/sitemap" class="nav-link">@T("Footer.Services.Sitemap")</a>
+                        </li>
+                    </ul>
+                </aside>
+            </div> <!-- row.// -->
+        </section>	<!-- footer-top.// -->
+
+        <section class="footer-copyright border-top">
+            <p class="text-muted"> © @T("Footer.CopyrightText") </p>
+
+        </section>
+    </div><!-- //container -->
+</footer>

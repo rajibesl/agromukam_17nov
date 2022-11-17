@@ -1,0 +1,31 @@
+﻿<div 
+     class="w-100 d-flex pt-3 pb-2"
+     style="border-top: 1px solid #eee; border-bottom: 1px solid #eee;">
+
+    <div
+         class="d-flex justify-content-center align-items-center w-100 create-response-btn"
+         style="height: 60px;">
+        <button class="btn btn-secondary rounded-0 shadow-sm btn-sm">
+            <i class="fas fa-tasks"></i>
+            Submit Offer
+        </button>
+    </div>
+
+    <div class="create-response-form mt-3 w-100 flex-column" style="display: none;">
+        <div class="row">
+            <div class="col">
+                @{
+                    var model = new CustomerWishResponseCreateModel();
+                    model.RequestId = Model.RequestDetails.Id;
+                    model.DeliveryStartDateUtc = DateTime.Now;
+                    model.DeliveryEndDateUtc = DateTime.Now.AddDays(7);
+                    @await Html.PartialAsync("_CustomerWishResponse", model);
+                }
+            </div>
+            <div class="col-auto pl-2">
+                <button class="btn btn-sm bg-light rounded-pill"> <i class="fas fa-times"></i> </button>
+            </div>
+        </div>
+    </div>
+
+</div>

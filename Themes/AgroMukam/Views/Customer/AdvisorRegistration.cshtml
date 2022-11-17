@@ -1,0 +1,592 @@
+﻿@model RegisterModel
+@using Nop.Services.Customers
+@{
+    Layout = "_ColumnsOne";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.Register").Text);
+    //page class
+    Html.AppendPageCssClassParts("html-registration-page");
+}
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Xsrf
+@functions{
+    public string GetAntiXsrfRequestToken()
+    {
+        return Xsrf.GetAndStoreTokens(Context).RequestToken;
+    }
+}
+
+@{
+    CustomerAttributeModel referrerAttribute = new CustomerAttributeModel();
+
+    Context.Request.Cookies.TryGetValue("referrercode", out var referrerCode);
+    if (!string.IsNullOrEmpty(referrerCode))
+    {
+        referrerAttribute = Model.CustomerAttributes.FirstOrDefault(c => c.Name == "Referrer Code");
+        if (referrerAttribute != null)
+            referrerAttribute.DefaultValue = referrerCode.ToString();
+    }
+}
+
+<link rel="stylesheet" href="/Themes/AgroMukam/Content/css/slide-unlock.css">
+<style>
+    .registration-wrap .card {
+        max-width: 650px;
+    }
+</style>
+<div class="page registration-page">
+    <div class="page-body pt-3">
+        <div class="registration-wrap">
+            <div class="card border-0 rounded-0 m-auto shadow-sm">
+                <div class="card-body p-0">
+
+                    <form asp-route="AdvisorRegistration"
+                          asp-route-returnurl="@Context.Request.Query["ReturnUrl"]"
+                          method="post"
+                          id="registrationForm">
+
+                        @* Title *@
+                        <div class="form-title text-center pt-4 pl-4 pr-4 pb-3">
+                            @await Component.InvokeAsync("Logo")
+                            <h4 class="text-light-green mt-3">@T("AdvisorRegistration.Register")</h4>
+                            <h6 class="text-muted-x mt-1">@T("AdvisorRegistration.AsAnAdvisor")</h6>
+                            <hr />
+                        </div>
+
+                        @* Model State Errors *@
+                        <div asp-validation-summary="ModelOnly" class="message-error pt-3 pb-3 pl-4 pr-4"></div>
+
+                        @* Mobile No. *@
+                        <div class="form-group pl-5 pr-5">
+                            <label for="Phone" class="mb-1"> @T("AdvisorRegistration.PhoneNumber"): </label>
+                            <div class="row no-gutters position-relative">
+                                <div class="col-auto position-static" style="width: 135px;">
+                                    <div class="dropdown phone-area-code-dropdown position-static">
+                                        <button id="btnAreaCode"
+                                                type="button"
+                                                class="btn btn-block rounded-0 text-muted pl-2 pr-2 dropdown-toggle"
+                                                data-toggle="dropdown"
+                                                data-display="static"
+                                                aria-haspopup="true"
+                                                aria-expanded="false"
+                                                data-selected-area-code="880">
+                                            <div class="row no-gutters">
+                                                <div class="col btn-text text-left text-truncate">(000) ...</div>
+                                                <div class="col-auto dropdown-caret">
+                                                    <i class="fas fa-chevron-down"></i>
+                                                </div>
+                                            </div>
+                                        </button>
+                                        <div class="dropdown-menu w-100 border-0 rounded-0 shadow">
+                                            <div class="form-group p-2 m-0 bg-white">
+                                                <input id="searchAreaCode"
+                                                       type="text"
+                                                       placeholder="Type to search..."
+                                                       class="form-control form-control-sm">
+                                            </div>
+                                            <div class="dropdown-menu-items"></div>
+                                        </div>
+                                        <input id="areaCodeHelper" name="areaCode" type="hidden" value="880" />
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <input type="text"
+                                           id="Phone"
+                                           name="Phone"
+                                           class="form-control"
+                                           data-val="true"
+                                           data-val-required="@T("AdvisorRegistration.PhoneNoIsRequired")"
+                                           data-val-number="@T("AdvisorRegistration.PhoneNoShouldContainDigitsOnly")"
+                                           data-val-regex="@T("AdvisorRegistration.PleaseTypeInAValidPhoneNo")"
+                                           data-val-regex-pattern="^[0-9]{9,11}$"
+                                           data-val-remote-url="@Url.RouteUrl("CheckPhoneNumberAvailability")"
+                                           data-val-remote-additionalfields="*.areaCode"
+                                           data-val-remote="@T("AdvisorRegistration.ThisPhoneNumberIsAlreadyRegistered")"
+                                           data-val-remote-success="remoteSuccess()"
+                                           disabled>
+                                </div>
+                            </div>
+                            <span class="field-validation-valid" data-valmsg-for="Phone" data-valmsg-replace="true"></span>
+                            <h3 class="failed-to-send-otp text-danger text-center" style="display: none;">@T("AdvisorRegistration.SomethingWentWrong,PleaseTryAgain...")<span></span></h3>
+                        </div>
+                        @* Slide to send Verification Code *@
+                        <div class="form-group slide-to-verify pl-5 pr-5">
+                            <label class="mb-1"> @T("AdvisorRegistration.Verify"): </label>
+                            <div id="slideToVerify" class="is-disabled"></div>
+                            <label class="text-danger val-msg mt-1" style="display: none;">@T("AdvisorRegistration.PleaseVerifyYourPhoneNumber")</label>
+                        </div>
+
+                        @* Mobile Verification *@
+                        <div class="form-group pl-5 pr-5 phone-verification-code" style="display: none;">
+                            <label for="PhoneVerificationCode">@T("AdvisorRegistration.VerificationCode"):</label>
+                            <div class="input-group">
+                                <input type="text"
+                                       id="PhoneVerificationCode"
+                                       name="PhoneVerificationCode"
+                                       class="form-control"
+                                       data-val="true"
+                                       data-val-required="@T("AdvisorRegistration.VerificationCodeIsRequired")">
+                                <div class="input-group-append">
+                                    <button class="btn bg-light-green text-white rounded-0 verify-otp" data-verified="false" type="button" disabled>Click to Verify</button>
+                                </div>
+                            </div>
+                            <span class="field-validation-valid" data-valmsg-for="PhoneVerificationCode" data-valmsg-replace="true"></span>
+                        </div>
+                        <h4 class="invalid-code-info text-danger text-center" style="text-transform: initial; display: none;">@T("AdvisorRegistration.InvalidCode")!<span></span></h4>
+                        <p class="resend-info text-info text-center" style="text-transform: initial; display: none;">@T("AdvisorRegistration.YouCanRequestToResendCodeIn") <span></span></p>
+                        <input type="hidden" id="UserNameHelper" asp-for="Username" value="" />
+                        <input type="hidden" id="PhoneNumberHelper" asp-for="Phone" value="" />
+
+
+                        @* Only visible after Phone verification *@
+                        <div class="ff-after-phone-verify" style="display: none;">
+                            <hr class="border-dashed" />
+                            <div class="form-fields pl-5 pr-5">
+                                <div class="form-group">
+                                    <label for="FirstName" class="mb-1">@T("AdvisorRegistration.FirstName"):<span class="text-danger ml-2">*</span></label>
+                                    <input type="text"
+                                           id="FirstName"
+                                           class="form-control"
+                                           name="FirstName"
+                                           data-val="true"
+                                           data-val-required="@T("AdvisorRegistration.FirstNameIsRequired")" />
+                                    <span class="field-validation-valid" data-valmsg-for="FirstName" data-valmsg-replace="true"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label for="LastName" class="mb-1">@T("AdvisorRegistration.LastName"): <span class="text-danger ml-2">*</span></label>
+                                    <input type="text"
+                                           id="LastName"
+                                           class="form-control"
+                                           name="LastName"
+                                           data-val="true"
+                                           data-val-required="@T("AdvisorRegistration.LastNameIsRequired")" />
+                                    <span class="field-validation-valid" data-valmsg-for="LastName" data-valmsg-replace="true"></span>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-auto">@T("Account.Fields.Gender"):</label>
+                                    <div class="gender col">
+                                        <span class="male">
+                                            <input type="radio" asp-for="Gender" value="M" checked="@(Model.Gender == "M")" id="gender-male" />
+                                            <label class="forcheckbox" for="gender-male">@T("Account.Fields.Gender.Male")</label>
+                                        </span>
+                                        <span class="female">
+                                            <input type="radio" asp-for="Gender" value="F" checked="@(Model.Gender == "F")" id="gender-female" />
+                                            <label class="forcheckbox" for="gender-female">@T("Account.Fields.Gender.Female")</label>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="Email" class="mb-1">@T("AdvisorRegistration.Email"):</label>
+                                    <input type="text"
+                                           id="Email"
+                                           class="form-control"
+                                           name="Email" />
+                                </div>
+                                <div class="form-group">
+                                    <label class="mb-1" asp-for="Password" asp-postfix=":"></label><span class="text-danger ml-2">*</span>
+                                    <input class="form-control" asp-for="Password" />
+                                    <span asp-validation-for="Password"></span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="mb-1" asp-for="ConfirmPassword" asp-postfix=":"></label><span class="text-danger ml-2">*</span>
+                                    <input class="form-control" asp-for="ConfirmPassword" />
+                                    <span asp-validation-for="ConfirmPassword"></span>
+                                </div>
+                            </div>
+
+                            <div class="address-fields">
+                                <hr class="border-dashed" />
+                                <div class="form-fields pl-5 pr-5">
+                                    <input type="hidden" value="20" name="CountryId" id="CountryId" />
+
+                                    <div class="form-group">
+                                        <label for="RegionId">@("Registration.Fields.Region"):</label>
+                                        <span class="text-danger ml-2">*</span>
+                                        <select class="form-control"
+                                                asp-for="RegionId"></select>
+                                        <span class="field-validation-error" data-valmsg-for="RegionId" data-valmsg-replace="true"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="CityId">@("Registration.Fields.City"):</label>
+                                        <span class="text-danger ml-2">*</span>
+                                        <select class="form-control"
+                                                asp-for="CityId"></select>
+                                        <span class="field-validation-error" data-valmsg-for="CityId" data-valmsg-replace="true"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="AreaId">@("Registration.Fields.Area"):</label>
+                                        <span class="text-danger ml-2">*</span>
+                                        <select class="form-control"
+                                                asp-for="AreaId"></select>
+                                        <span class="field-validation-error" data-valmsg-for="AreaId" data-valmsg-replace="true"></span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label asp-for="StreetAddress" asp-postfix=":"></label>
+                                        <span class="text-danger ml-2">*</span>
+                                        <input class="form-control"
+                                               asp-for="StreetAddress" />
+                                        <span class="field-validation-error" data-valmsg-for="StreetAddress" data-valmsg-replace="true"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            @if (Model.CustomerAttributes.Count > 0)
+                            {
+                                @* If doctor account *@
+                                <div class="doctor-account">
+                                    <hr class="border-dashed" />
+                                    <div class="form-fields pl-5 pr-5">
+                                        @{
+                                            var doctorSpecificAttributes = Model.CustomerAttributes.Where(x => x.FormStepId == 1 && x.FormGroupName == "advisor").ToList();
+                                            @await Html.PartialAsync("_CustomerAttributes", doctorSpecificAttributes)
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            @* Referral *@
+                            @if (!string.IsNullOrEmpty(referrerAttribute.DefaultValue))
+                            {
+                                var controlId = $"{NopCustomerServicesDefaults.CustomerAttributePrefix}{referrerAttribute.Id}";
+                                <div class="form-fields pl-5 pr-5">
+                                    <div class="form-group">
+                                        <label for="Email" class="mb-1">Referrer Code:</label>
+                                        <input name="@(controlId)"
+                                               type="text"
+                                               class="textbox form-control"
+                                               id="@(controlId)"
+                                               value="@(referrerAttribute.DefaultValue)"
+                                               disabled />
+                                    </div>
+                                </div>
+                            }
+
+                        </div>
+
+                        @* User Consent *@
+                        <div class="accept-consent">
+                            <hr class="border-dashed" />
+                            <div class="form-group pl-5 pr-5">
+                                <input id="accept-consent" type="checkbox" name="accept-consent" />
+                                <label for="accept-consent">@T("Account.Fields.AcceptPrivacyPolicy")</label>
+                                <a class="read" id="read-privacyinfo" href="@Url.RouteUrl("Topic", new {SeName = Html.GetTopicSeNameAsync("privacyinfo") })">@T("Account.Fields.AcceptPrivacyPolicy.Read")</a>
+                            </div>
+                        </div>
+
+
+                        @* Submit *@
+                        <hr class="border-dashed" />
+                        <div class="action-buttons pt-2 pl-5 pr-5 pb-2">
+                            <button class="btn bg-light-green border-light-green text-white btn-block rounded-0 shadow-sm">
+                                @T("Account.Register.Button")
+                            </button>
+                        </div>
+
+                        <hr class="border-dashed" />
+                        <div class="text-center pt-3 pl-4 pr-4 pb-4">
+                            <h6 class="text-muted">
+                                @T("AdvisorRegistration.AlreadyHaveAnAgroMukamAccount?")
+                                <br>
+                                <a href="@Url.RouteUrl("Login")" class="text-light-green"> @T("AdvisorRegistration.ClickHere") </a> @T("AdvisorRegistration.ToLogin")
+                            </h6>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/Themes/AgroMukam/Content/js/jquery.slideunlock.js" asp-location="Footer"></script>
+<script asp-location="Footer">
+
+    function prepareAreCodeDropdownItem(item) {
+        return `<div data-text="${item.name}" data-val="${item.code}"
+            class="dropdown-item cursor-pointer d-flex no-gutters">
+                <div class="col-2">(${item.code})</div>
+                <div class="col">${item.name}</div>
+            </div>`;
+    }
+
+    function removePrecedingDigits(value) {
+        if (value && value.length > 1) {
+            let newValue = value.replace(/\D/g, '');
+            const areaCode = $('#btnAreaCode').data('selected-area-code');
+            if (areaCode == '880' && (value.startsWith('880') || value.startsWith('0'))) {
+                newValue = $('#Phone').val()
+                    .replace(/^880/, "")
+                    .replace(/^0/, "");
+            }
+            $('#Phone').val(newValue);
+            if (newValue.length >= 10)
+                $('#Phone').blur().focus();
+        }
+    }
+
+    $(document).ready(function () {
+        $('.master-wrapper-content').addClass('pt-2 pt-lg-0');
+
+        var otpCountDownInterval;
+
+        // Generate Phone Area Code
+        $.getJSON('/Themes/AgroMukam/Content/js/all.json', function (resp) {
+            let areaCodes = '';
+
+            for (var item of resp)
+                areaCodes += prepareAreCodeDropdownItem(item);
+
+            $('.phone-area-code-dropdown .dropdown-menu-items').html(areaCodes);
+            $('.phone-area-code-dropdown .btn-text').text(`(880) Bangladesh`);
+            $('#Phone').removeAttr('disabled');
+        });
+
+        $('.phone-area-code-dropdown').on('hidden.bs.dropdown', function () {
+            $('.dropdown-caret i', this).removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        });
+        $('.phone-area-code-dropdown').on('shown.bs.dropdown', function () {
+            $('.dropdown-caret i', this).removeClass('fa-chevron-down').addClass('fa-chevron-up');
+        });
+
+        // Phone Area Code Change/Select Event
+        $(document).on('click', '.phone-area-code-dropdown .dropdown-item', function () {
+            const txt = $(this).data('text');
+            const val = $(this).data('val');
+            $('.phone-area-code-dropdown .btn-text').text(`(${val}) ${txt}`);
+            $('#btnAreaCode').data('selected-area-code', val);
+            $('#areaCodeHelper').val(val);
+        });
+
+        // Phone Area Code Search
+        $('#searchAreaCode').keyup(function () {
+            const searchTerm = $(this).val();
+
+            if (searchTerm == '' || searchTerm.trim() == '') {
+                $('.phone-area-code-dropdown .dropdown-menu-items .dropdown-item').show();
+            } else {
+                $('.phone-area-code-dropdown .dropdown-menu-items .dropdown-item').each(function () {
+                    const itemText = $(this).find('.col').text().toLowerCase();
+                    itemText.includes(searchTerm.toLowerCase())
+                        ? $(this).addClass('d-flex').removeClass('d-none')
+                        : $(this).addClass('d-none').removeClass('d-flex');
+                });
+            }
+        });
+
+        // fix phone number auto correction for BD
+        $('#Phone').keyup(function (e) { removePrecedingDigits(e.target.value); });
+
+        // validate whether phone no've been verified
+        $('#registrationForm').submit(function (e) {
+
+            if (!$('#accept-consent').is(':checked')) {
+                alert('@Html.Raw(JavaScriptEncoder.Default.Encode(T("Account.Fields.AcceptPrivacyPolicy.Required").Text))');
+                e.preventDefault();
+                return false;
+            }
+
+            const verificationInputVisible = $('.phone-verification-code').is(':visible');
+            const otpVerified = $('.verify-otp').data('verified');
+
+            if (!verificationInputVisible || !otpVerified) {
+                $('.slide-to-verify .val-msg').show('slow');
+                e.preventDefault();
+            }
+        });
+
+        // detect Phone number remote validation complete
+        // && enable or disable slide to unlock
+        $(document).ajaxComplete(function (event, xhr, settings) {
+            if (settings.url.includes(`@Url.RouteUrl("CheckPhoneNumberAvailability")`)) {
+                if ($('#Phone').hasClass('input-validation-error')) {
+                    $('#slideToVerify').addClass('is-disabled');
+                } else {
+                    $('#slideToVerify').removeClass('is-disabled');
+                }
+            }
+        });
+
+        // initialize slider (verification code)
+        function initializeSlideToUnlock(isDisabled) {
+            $("#slideToVerify")
+                .attr('class', isDisabled ? 'is-disabled' : '')
+                .html('')
+                .slideToUnlock({
+                    lockText: 'Slide To Send Code',
+                    unlockText: 'Verification Code Sent',
+                    unlockfn: sendOtpCode,
+                    dependant: '#Phone'
+                });
+        }
+        initializeSlideToUnlock(true);
+
+        // I tried to 'slide' right after page load, without any input
+        // && it made NO sense!!!
+        //$('#slideToVerify').click(function () {
+        //    if ($(this).hasClass('is-disabled'))
+        //        $('#registrationForm').submit();
+        //});
+
+        // on successful slide
+        function sendOtpCode() {
+            console.log('sending Otp');
+            var areaCode = $('#areaCodeHelper').val();
+            var phoneNumber = $('#Phone').val();
+            var url = `/Customer/SendOtpCode?phoneNumber=${areaCode}${phoneNumber}`;
+            console.log('url', url);
+            $.post({
+                url: url,
+                headers: {
+                    "RequestVerificationToken": '@GetAntiXsrfRequestToken()'
+                },
+                success: function (data) {
+                    console.log('data', data);
+                    if (data) {
+                        $('.slide-to-verify').hide().find('.val-msg').hide();
+                        $('.phone-verification-code').show('slow');
+                        beginOtpResendCountDown();
+                    } else {
+                        $('.failed-to-send-otp').show();
+                        setTimeout(function () {
+                            $('.failed-to-send-otp').hide();
+                            initializeSlideToUnlock();
+                        });
+                    }
+                },
+                error: function (err) {
+                    console.log('error', err);
+                }
+            });
+        }
+
+        function beginOtpResendCountDown() {
+            var deadline = new Date();
+            deadline.setMinutes(deadline.getMinutes() + 3);
+            otpCountDownInterval = setInterval(function () {
+                var now = new Date().getTime();
+                var t = deadline - now;
+                var minutes = Math.floor((t % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((t % (1000 * 60)) / 1000);
+                $('.resend-info').show().find('span').html(`${minutes}m ${seconds}s`);
+                if (t < 0) {
+                    clearInterval(otpCountDownInterval);
+                    $('.slide-to-verify').show('slow');
+                    $('.phone-verification-code').hide();
+                    $('.resend-info').hide();
+                    initializeSlideToUnlock();
+                }
+            }, 1000);
+        }
+
+        // enable 'click to verify' if field not empty
+        $('.phone-verification-code input').keyup(function (e) {
+            var value = e.target.value.trim();
+            if (value.length > 0) {
+                $('.phone-verification-code button').removeAttr('disabled');
+            } else {
+                $('.phone-verification-code button').attr('disabled', true);
+            }
+        });
+        // and validate OTP on 'click to verify'
+        $('.verify-otp').on('click', function () {
+            console.log('validate Otp');
+            var areaCode = $('#areaCodeHelper').val();
+            var phoneNumber = $('#Phone').val();
+            var code = $('.phone-verification-code input').val();
+            var url = `/Customer/ValidateOtpCode?phoneNumber=${areaCode}${phoneNumber}&otpCode=${code}`;
+            $.post({
+                url: url,
+                headers: {
+                    "RequestVerificationToken": '@GetAntiXsrfRequestToken()'
+                },
+                success: function (data) {
+                    console.log('data', data);
+                    if (data) {
+                        $('#UserNameHelper, #PhoneNumberHelper').val(`${areaCode}${phoneNumber}`);
+                        $('.slide-to-verify, .resend-info').hide();
+                        $('.phone-verification-code input, .phone-verification-code button')
+                            .attr('disabled', true)
+                            .data('verified', true);
+                        $('.phone-verification-code button')
+                            .text('Verified')
+                            .prepend('<i class="fas fa-check-circle mr-2"></i>');
+                        $('.ff-after-phone-verify').show('slow');
+                        $('#Email, #Password').val('');
+                        clearInterval(otpCountDownInterval);
+                    } else {
+                        $('.invalid-code-info').show('slow', function () {
+                            setTimeout(function () {
+                                $('.invalid-code-info').hide();
+                            }, 5000);
+                        });
+                    }
+                },
+                error: function (err) {
+                    console.log('error', err);
+                }
+            });
+        });
+
+        var langKey = ALGOLIA_CONFIG.languageKey;
+        var emptyOption = '<option value="0">--- &nbsp; Select &nbsp; ---</option>';
+
+            function generateAddressOptions(selector, data, selectedVal) {
+                var el = $(selector);
+                //el.html(emptyOption);
+
+                $.each(data,
+                    function (id, option) {
+                        el.append($('<option></option>').val(option.Id)
+                            .html(langKey == 'en' ? option.Name : option.BnName));
+                    });
+
+                el.val(selectedVal);
+                setTimeout(function () {
+                    $(selector).trigger('change');
+                }, 300);
+            }
+
+        var selectedCountry = $('#CountryId').val();
+        var url = `@(Url.RouteUrl("GetRegionsByCountryId"))?countryId=${selectedCountry}`;
+
+        $.get(url, function (resp) {
+            generateAddressOptions('#RegionId', resp, `@Model.RegionId`);
+        });
+
+        $('#RegionId').change(function () {
+            $('#AreaId').html(emptyOption);
+            var val = $(this).val();
+            var url = `@(Url.RouteUrl("GetCitiesByRegionId"))?regionId=${val}`;
+
+            $.get(url, function (resp) {
+                generateAddressOptions('#CityId', resp, `@Model.CityId`);
+            });
+        });
+
+        $('#CityId').change(function () {
+            $('#AreaId').html(emptyOption);
+            var val = $(this).val();
+            var url = `@(Url.RouteUrl("GetAreasByCityId"))?cityId=${val}`;
+
+            $.get(url, function (resp) {
+                generateAddressOptions('#AreaId', resp, `@Model.AreaId`);
+            });
+
+        });
+
+        // fix phone number auto correction for BD
+        $('#Phone').keyup(function (e) {
+            if (e.target.value.length > 1
+                && $('#phoneAreaCode').val() == '880'
+                && e.target.value.startsWith('0')
+            ) {
+                $(this).val(
+                    $(this).val()
+                        .replace('0', '')
+                );
+            }
+        });
+
+    });
+</script>

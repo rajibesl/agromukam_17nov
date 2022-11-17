@@ -1,0 +1,65 @@
+﻿@model PopularProductTagsModel
+@{
+    Layout = "_ColumnsOne";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.AllProductTags").Text);
+    //page class
+    Html.AppendPageCssClassParts("html-product-tags-all-page");
+}
+
+<style>
+    .entity-item {
+        background: #f1f1f1 !important;
+        transition: .3s all ease-in-out;
+    }
+
+        .entity-item a {
+            color: #343a40;
+            text-decoration: none !important;
+        }
+
+        .entity-item:hover {
+            background: rgba(105, 164, 31, 1) !important;
+        }
+
+            .entity-item:hover a {
+                color: #fff !important;
+            }
+</style>
+
+<div class="page product-tags-all-page">
+    <div class="page-body container-lg pt-3" style="min-height: 420px;">
+        <div class="text-center">
+            <h4 class="text-light-green"> @T("Products.Tags.All") </h4>
+            <hr />
+        </div>
+        <div class="entity card mb-3 rounded-0">
+            <div class="entity-body card-body p-2">
+                @if (Model.Tags.Count > 0)
+                {
+                    <div class="d-flex flex-row flex-wrap justify-content-center">
+                        @foreach (var item in Model.Tags)
+                        {
+                            <div class="d-flex bg-white m-1 justify-content-center align-items-center shadow-sm entity-item">
+                                <a href="@Url.RouteUrl("ProductsByTag", new { item.SeName })"
+                                   class="producttag py-1 px-3">
+                                    @item.Name
+                                </a>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex bg-white m-1 justify-content-center align-items-center shadow-sm entity-item">
+                        <p class="m-0 px-4 py-2"> No tags found! </p>
+                    </div>
+                }
+            </div>
+        </div>
+
+
+
+    </div>
+</div>

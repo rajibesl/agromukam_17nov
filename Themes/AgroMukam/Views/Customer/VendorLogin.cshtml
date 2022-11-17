@@ -1,0 +1,229 @@
+﻿@model LoginModel
+@using Nop.Core
+@using Nop.Core.Domain.Customers
+
+@inject IWebHelper webHelper
+@{
+    Layout = "_ColumnsOne";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.Login").Text);
+    //page class
+    Html.AppendPageCssClassParts("html-login-page");
+
+    //register URL with return URL (if specified)
+    var registerUrl = Url.RouteUrl("RegisterAdv", new { returnUrl = this.Context.Request.Query["returnUrl"] }, webHelper.GetCurrentRequestProtocol());
+}
+
+<style>
+    .login-wrap .card {
+        max-width: 450px;
+    }
+</style>
+<div class="page login-page">
+
+    @await Component.InvokeAsync("Widget", new { widgetZone = "agroads_vendor_login_page" })
+
+    <div class="page-body pt-3">
+        <div class="login-wrap">
+            <div class="card border-0 rounded-0 m-auto shadow-sm">
+                <div class="card-body p-0">
+                    <form asp-route="Login"
+                          asp-route-returnurl="@Context.Request.Query["ReturnUrl"]"
+                          method="post"
+                          id="loginForm">
+
+                        @* Title *@
+                        <div class="form-title text-center pt-4 pl-4 pr-4 pb-3">
+                            @await Component.InvokeAsync("Logo")
+                            <h4 class="text-light-green mt-3">@T("VendorLoginPage.WelcomeBack")!</h4>
+                            <h6 class="text-muted-x">@T("VendorLoginPage.LoginToAccessMoreFeaturesOnAgroMukam")</h6>
+                            <hr />
+                        </div>
+
+                        @* Model State Errors *@
+                        <div asp-validation-summary="ModelOnly" class="message-error pt-3 pb-3 pl-4 pr-4">@T("Account.Login.Unsuccessful")</div>
+
+                        @* UserName *@
+                        <div class="form-group pl-4 pr-4">
+                            <label for="Username" class="mb-1"> @T("VendorLoginPage.Username"): </label>
+                            <input asp-for="Username" type="hidden" />
+
+                            <div class="row no-gutters position-relative">
+                                <div class="col-auto position-static" style="width: 110px;">
+                                    <div class="dropdown phone-area-code-dropdown position-static">
+                                        <button id="btnAreaCode"
+                                                type="button"
+                                                class="btn btn-block rounded-0 text-muted pl-2 pr-2 dropdown-toggle"
+                                                data-toggle="dropdown"
+                                                data-display="static"
+                                                aria-haspopup="true"
+                                                aria-expanded="false"
+                                                data-selected-area-code="880">
+                                            <div class="row no-gutters">
+                                                <div class="col btn-text text-left text-truncate">(000) ...</div>
+                                                <div class="col-auto dropdown-caret">
+                                                    <i class="fas fa-chevron-down"></i>
+                                                </div>
+                                            </div>
+                                        </button>
+                                        <div class="dropdown-menu w-100 border-0 rounded-0 shadow">
+                                            <div class="form-group p-2 m-0 bg-white">
+                                                <input id="searchAreaCode"
+                                                       type="text"
+                                                       placeholder="Type to search..."
+                                                       class="form-control form-control-sm">
+                                            </div>
+                                            <div class="dropdown-menu-items"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <input id="Phone"
+                                           name="Phone"
+                                           class="form-control"
+                                           autofocus="autofocus"
+                                           placeholder="@T("VendorLoginPage.EnterYourPhoneNo.")"
+                                           data-val="true"
+                                           data-val-required="@T("VendorLoginPage.*UsernameIsRequired.")" disabled />
+                                    <span class="field-validation-valid m-0 p-0" data-valmsg-for="Phone" data-valmsg-replace="true"></span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        @* Password *@
+                        <div class="form-group pl-4 pr-4">
+                            <label for="password" class="mb-1"> @T("VendorLoginPage.Password"): </label>
+                            <input asp-for="Password"
+                                   class="form-control"
+                                   placeholder="@T("VendorLoginPage.EnterYourPassword")"
+                                   data-val="true"
+                                   data-val-required="@T("VendorLoginPage.* PasswordIsRequired")" />
+                            <span class="field-validation-valid m-0 p-0" data-valmsg-for="Password" data-valmsg-replace="true"></span>
+                        </div>
+
+                        @* Remember Me? *@
+                        <div class="form-group pl-4 pr-4 mb-4">
+                            <div class="row">
+                                <div class="col">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="" id="RememberMe" name="RememberMe">
+                                        <label class="form-check-label" for="RememberMe">
+                                            @T("VendorLoginPage.RememberMe")
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col text-right">
+                                    <a asp-route="PasswordRecovery" class="text-light-green">@T("Account.Login.ForgotPassword")</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        @* Submit *@
+                        <hr class="border-dashed" />
+                        <div class="action-buttons pt-2 pl-5 pr-5 pb-2">
+                            <button class="btn bg-light-green border-light-green text-white btn-block rounded-0 shadow-sm">
+                                @T("Account.Login.LoginButton")
+                            </button>
+                        </div>
+
+                        <hr class="border-dashed" />
+                        <div class="text-center pt-3 pl-4 pr-4 pb-4">
+                            <h6 class="text-muted">
+                                @T("VendorLoginPage.NotAnAgroMukamVendor")?
+                                <br>
+                                <a href="@Url.RouteUrl("VendorRegistration")" class="text-greenish">@T("VendorLoginPage.ClickHere") </a> @T("VendorLoginPage.ToApplyForAVendorAccount")
+                            </h6>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+</div>
+
+<script asp-location="Footer">
+
+    function prepareAreCodeDropdownItem(item) {
+        return `<div data-text="${item.name}" data-val="${item.code}"
+            class="dropdown-item cursor-pointer d-flex no-gutters">
+                <div class="col-2">(${item.code})</div>
+                <div class="col">${item.name}</div>
+            </div>`;
+    }
+
+    function removePrecedingDigits(value) {
+        if (value && value.length > 1) {
+            const areaCode = $('#btnAreaCode').data('selected-area-code');
+            if (areaCode == '880' && (value.startsWith('880') || value.startsWith('0'))) {
+                const newValue = $('#Phone').val()
+                    .replace(/^880/, "")
+                    .replace(/^0/, "");
+                $('#Phone').val(newValue);
+            }
+        }
+    }
+
+    $(document).ready(function () {
+        $('.master-wrapper-content').addClass('pt-2 pt-lg-0');
+
+        // Generate Phone Area Code
+        $.getJSON('/Themes/AgroMukam/Content/js/all.json', function (resp) {
+            let areaCodes = '';
+
+            for (var item of resp)
+                areaCodes += prepareAreCodeDropdownItem(item);
+
+            $('.phone-area-code-dropdown .dropdown-menu-items').html(areaCodes);
+            $('.phone-area-code-dropdown .btn-text').text(`(880) Bangladesh`);
+            $('#Phone').removeAttr('disabled');
+        });
+
+        $('.phone-area-code-dropdown').on('hidden.bs.dropdown', function () {
+            $('.dropdown-caret i', this).removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        });
+        $('.phone-area-code-dropdown').on('shown.bs.dropdown', function () {
+            $('.dropdown-caret i', this).removeClass('fa-chevron-down').addClass('fa-chevron-up');
+        });
+
+        // Phone Area Code Change/Select Event
+        $(document).on('click', '.phone-area-code-dropdown .dropdown-item', function () {
+            const txt = $(this).data('text');
+            const val = $(this).data('val');
+            $('.phone-area-code-dropdown .btn-text').text(`(${val}) ${txt}`);
+            $('#btnAreaCode').data('selected-area-code', val);
+        });
+
+        // Phone Area Code Search
+        $('#searchAreaCode').keyup(function () {
+            const searchTerm = $(this).val();
+
+            if (searchTerm == '' || searchTerm.trim() == '') {
+                $('.phone-area-code-dropdown .dropdown-menu-items .dropdown-item').show();
+            } else {
+                $('.phone-area-code-dropdown .dropdown-menu-items .dropdown-item').each(function () {
+                    const itemText = $(this).find('.col').text().toLowerCase();
+                    itemText.includes(searchTerm.toLowerCase())
+                        ? $(this).addClass('d-flex').removeClass('d-none')
+                        : $(this).addClass('d-none').removeClass('d-flex');
+                });
+            }
+        });
+
+        // fix phone number auto correction for BD
+        $('#Phone').change(function (e) { removePrecedingDigits(e.target.value); });
+
+        $('#loginForm').submit(function () {
+            const areaCode = $('#btnAreaCode').data('selected-area-code');
+            const phoneNumber = $('#Phone').val();
+            removePrecedingDigits(phoneNumber);
+            $('#Username').val(areaCode + phoneNumber);
+        });
+
+    });
+</script>

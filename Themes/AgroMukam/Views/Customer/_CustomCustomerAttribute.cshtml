@@ -1,0 +1,75 @@
+﻿@model CustomerAttributeModel
+@using Nop.Core.Domain.Catalog
+@using Nop.Services.Customers
+@{
+    var controlId = $"{NopCustomerServicesDefaults.CustomerAttributePrefix}{Model.Id}";
+    var textPrompt = Model.Name;
+}
+
+<div class="inputs custom-attributes">
+    <label>@textPrompt:</label>
+
+    @switch (Model.AttributeControlType)
+    {
+        case AttributeControlType.DropdownList:
+            {
+                <select name="@(controlId)" id="@(controlId)">
+                    @if (!Model.IsRequired)
+                    {
+                        <option value="0">---</option>
+                    }
+                    @foreach (var attributeValue in Model.Values)
+                    {
+                        <option selected="@attributeValue.IsPreSelected" value="@attributeValue.Id">@attributeValue.Name</option>
+                    }
+                </select>
+            }
+            break;
+        case AttributeControlType.RadioList:
+            {
+                <ul class="option-list">
+                    @foreach (var attributeValue in Model.Values)
+                    {
+                        <li>
+                            <input id="@(controlId)_@(attributeValue.Id)" type="radio" name="@(controlId)" value="@attributeValue.Id" checked="@attributeValue.IsPreSelected" />
+                            <label for="@(controlId)_@(attributeValue.Id)">@attributeValue.Name</label>
+                        </li>
+                    }
+                </ul>
+            }
+            break;
+        case AttributeControlType.Checkboxes:
+        case AttributeControlType.ReadonlyCheckboxes:
+            {
+                <ul class="option-list">
+                    @foreach (var attributeValue in Model.Values)
+                    {
+                        <li>
+                            <input id="@(controlId)_@(attributeValue.Id)" type="checkbox" name="@(controlId)" value="@attributeValue.Id" checked="@attributeValue.IsPreSelected" @(Model.AttributeControlType == AttributeControlType.ReadonlyCheckboxes ? Html.Raw(" disabled=\"disabled\"") : null) />
+                            <label for="@(controlId)_@(attributeValue.Id)">@attributeValue.Name</label>
+                        </li>
+                    }
+                </ul>
+            }
+            break;
+        case AttributeControlType.TextBox:
+            {
+                <input name="@(controlId)" type="text" class="textbox" id="@(controlId)" value="@Model.DefaultValue" />
+            }
+            break;
+        case AttributeControlType.MultilineTextbox:
+            {
+                <textarea id="@(controlId)" name="@(controlId)">@Model.DefaultValue</textarea>
+            }
+            break;
+        case AttributeControlType.Datepicker:
+        case AttributeControlType.FileUpload:
+        case AttributeControlType.ColorSquares:
+        case AttributeControlType.ImageSquares:
+            {
+                //not support attribute type
+            }
+            break;
+    }
+    <nop-required />
+</div>

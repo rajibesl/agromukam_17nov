@@ -1,0 +1,342 @@
+﻿@model CustomerOrderListModel
+@using Nop.Services.Orders
+@inject IOrderService _orderService
+@inject Nop.Services.Media.IPictureService _pictureService
+@inject Nop.Services.Catalog.IProductService _productService
+@{
+    Layout = "_ColumnsTwo";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.Account").Text);
+    //page class
+    Html.AppendPageCssClassParts("html-account-page");
+    Html.AppendPageCssClassParts("html-order-list-page");
+}
+@section left
+{
+    @await Html.PartialAsync("_CustomerNavigation", "my-orders")
+}
+
+<style>
+    .order-tabs a.active {
+        border-bottom: 2px solid #69a41f;
+    }
+
+    .order-tabs .nav-link {
+        color: rgba(0,0,0,.4);
+    }
+
+        .order-tabs .nav-link:hover {
+            color: #55c57a;
+        }
+
+    .order-tabs .nav-pills .nav-link.active {
+        color: rgba(0,0,0,.6);
+        background-color: transparent;
+    }
+</style>
+
+<div class="page account-page order-list-page">
+    <div class="p-title">
+        <h5> @T("MyAccount.MyOrders") </h5>
+    </div>
+    <div class="page-body pt-3" style="min-height: 400px;">
+
+        <div class="order-tabs">
+            <ul class="nav nav-pills border-bottom mb-3">
+                <li class="nav-item">
+                    <a href="#" class="nav-link rounded-0 active" data-key="all">
+                        @T("MyAccount.MyOrders.All")
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link rounded-0" data-key="to-pay">
+                        @T("MyAccount.MyOrders.ToPay")
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link rounded-0" data-key="to-ship">
+                        @T("MyAccount.MyOrders.ToShip")
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        @if (Model.Orders.Count > 0)
+        {
+            <div class="filter-orders">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="row no-gutters">
+                            <div class="col-auto pt-2 pr-2">@T("MyAccount.MyOrders.Show"): </div>
+                            <div class="col-auto">
+                                <select class="custom-select rounded-0">
+                                    <option value="5">@T("MyAccount.MyOrders.Last5Orders")</option>
+                                    <option value="15">@T("MyAccount.MyOrders.Last15Days")</option>
+                                    <option value="30">@T("MyAccount.MyOrders.Last30Days")</option>
+                                    <option value="6">@T("MyAccount.MyOrders.Last6Months")</option>
+                                    <option value="1">@T("MyAccount.MyOrders.OrdersPlacedIn2022")</option>
+                                    <option value="0">@T("MyAccount.MyOrders.AllOrders")</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="list-preloader">
+                <div class="d-flex flex-column justify-content-center" style="height: 200px;">
+                    <img src="/Themes/AgroMukam/Content/images/loading.gif" class="d-block mx-auto my-3" />
+                    <span class="text-muted-x text-center"> Loading Orders... </span>
+                </div>
+            </div>
+
+            <div class="no-order" style="display: none;">
+                <div class="d-flex flex-column justify-content-center" style="height: 200px;">
+                    <h5 class="text-muted text-center"> No Order <span></span> </h5>
+                </div>
+            </div>
+
+            <div class="order-list" style="display: none;">
+                @foreach (var order in Model.Orders)
+                {
+                    <div class="card order-card border-0 shadow-sm mt-3"
+                         data-createon="@order.CreatedOn"
+                         data-paymentstatus="@order.PaymentStatus.ToLowerInvariant()"
+                         data-shippingstatus="@order.ShippingStatus.ToLowerInvariant()">
+                        @*  *@
+                        <div class="card-header">
+                            <div class="d-flex flex-row">
+                                <div class="d-flex flex-fill flex-column">
+                                    <div>
+                                        @{
+                                            <span>
+                                                @T("MyAccount.MyOrders.Order") <span class="text-light-green">
+                                                    #@order.GeneratedOrderNumber
+                                                </span>
+                                            </span>
+                                        }
+                                    </div>
+                                    <div>
+                                        <span class="text-muted-x">@T("MyAccount.MyOrders.PlacedOn") @order.CreatedOn </span>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <input type="button" value="Manage" class="button-2 btn btn-default order-details-button text-uppercase" onclick="setLocation('@Url.RouteUrl("OrderDetails", new { orderId = order.Id })')" />
+                                </div>
+                            </div>
+                        </div>
+
+                        @*  *@
+                        <div class="card-body">
+
+                            <div class="order-status d-flex flex-row justify-content-center">
+                                <div class="mx-1 px-3 py-1 bg-light text-light-green rounded-pill">
+                                    @T("MyAccount.MyOrders.Order"): @order.OrderStatus
+                                </div>
+                                <div class="mx-1 px-3 py-1 bg-light text-light-green rounded-pill">
+                                    @T("MyAccount.MyOrders.Payment"): @order.PaymentStatus
+                                </div>
+                                <div class="mx-1 px-3 py-1 bg-light text-light-green rounded-pill">
+                                    @T("MyAccount.MyOrders.Delivery"): @order.ShippingStatus
+                                </div>
+                            </div>
+
+                            <hr style="border-top-color: #eee;" />
+
+                            <div class="order-items d-flex flex-row">
+                                <div class="d-flex flex-column flex-fill" style="border-right: 1px solid #eee;">
+                                    @{
+                                        var orderItems = await _orderService.GetOrderItemsAsync(order.Id);
+                                        if (orderItems.Count > 0)
+                                        {
+                                            foreach (var item in orderItems)
+                                            {
+                                                var imgSrc = "/Themes/AgroMukam/Content/images/no-image.png";
+                                                var product = await _productService.GetProductByIdAsync(item.ProductId);
+                                                if (product != null)
+                                                {
+                                                    var productImg = await _pictureService.GetProductPictureAsync(product, null);
+                                                    if (productImg != null)
+                                                    {
+                                                        imgSrc = await _pictureService.GetPictureUrlAsync(productImg.Id);
+                                                    }
+                                                }
+
+                                                <div class="d-flex flex-row mb-2">
+                                                    <div class="item-thumb border" style="height: 80px; width: 80px;">
+                                                        <img src="@imgSrc" alt="" class="img-fluid" />
+                                                    </div>
+                                                    <div class="item-title flex-fill align-self-center px-3" style="max-width: 420px;">
+                                                        @if (product != null)
+                                                        {
+                                                            @product.Name
+                                                        }
+                                                        else
+                                                        {
+                                                            <span> Something went wrong! May be the product is no longer available </span>
+                                                        }
+                                                    </div>
+                                                    <div class="item-qty align-self-center" style="width: 80px;">
+                                                        <span class="text-muted-x"> Qty: </span> @item.Quantity
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                    }
+                                </div>
+                                <div class="d-flex flex-column px-5 justify-content-center align-items-center">
+                                    <div>
+                                        <span class="text-muted"> @T("MyAccount.MyOrders.Total") </span>
+                                    </div>
+                                    <div>
+                                        <h5 class="text-light-green"> @order.OrderTotal </h5>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <script asp-location="Footer">
+
+                function getDateDiff(dt) {
+                    return Math.floor((new Date() - dt) / (1000 * 60 * 60 * 24));
+                }
+
+                function setView(msg) {
+                    $('.no-order h5 span').text(msg);
+                    const items = $('.order-list .order-card:visible');
+                    $('.no-order')[items.length == 0 ? 'show' : 'hide']();
+                    $('.list-preloader').hide();
+                    $('.order-list').show();
+                }
+
+                function showLastFive() {
+                    $('.order-list .order-card').each(function (i) {
+                        $(this)[i < 5 ? 'show' : 'hide']();
+                        setView('');
+                    });
+                }
+
+                function filterDayWise(noOfDays) {
+                    $('.order-list .order-card').each(function () {
+                        const dt = $(this).attr('data-createon');
+                        const diff = getDateDiff(new Date(dt));
+                        $(this)[diff <= noOfDays ? 'show' : 'hide']();
+                        setView('Place In Last ' + noOfDays + ' Days');
+                    });
+                }
+
+                function showThisYear() {
+                    $('.order-list .order-card').each(function () {
+                        const createdOn = $(this).attr('data-createon');
+                        const dt = new Date(createdOn);
+                        $(this)[dt.getUTCFullYear() == '2022' ? 'show' : 'hide']();
+                        setView('Placed This year');
+                    });
+                }
+
+                function showAll() {
+                    $('.order-list .order-card').each(function () {
+                        $(this).show();
+                        setView();
+                    });
+                }
+
+                function showOrdersToPay() {
+                    $('.order-list .order-card').each(function () {
+                        const paymentStatus = $(this).attr('data-paymentstatus');
+                        $(this)[paymentStatus <= 'pending' ? 'show' : 'hide']();
+                        $(this).show();
+                        setView();
+                    });
+                }
+
+                function showOrdersToShip() {
+                    $('.order-list .order-card').each(function () {
+                        const paymentStatus = $(this).attr('data-paymentstatus');
+                        const shippingStatus = $(this).attr('data-shippingstatus');
+                        const condt = paymentStatus == 'paid' &&
+                            (shippingStatus != 'shipped' || shippingStatus != 'delivered');
+                        $(this)[condt ? 'show' : 'hide']();
+                        setView();
+                    });
+                }
+
+                $(document).ready(function () {
+                    showLastFive();
+
+                    $('.order-tabs .nav-link').click(function (e) {
+                        e.preventDefault();
+                        if (!$(this).hasClass('active')) {
+                            $('.order-list').hide();
+                            $('.list-preloader').show();
+
+                            $('.order-tabs .nav-link').removeClass('active');
+                            $(this).addClass('active');
+
+                            const key = $(this).attr('data-key');
+                            switch (key) {
+                                case 'to-pay':
+                                    showOrdersToPay();
+                                    $('.filter-orders').hide();
+                                    break;
+                                case 'to-ship':
+                                    showOrdersToShip();
+                                    $('.filter-orders').hide();
+                                    break;
+                                default:
+                                    showLastFive();
+                                    $('.filter-orders').show();
+                                    break;
+                            }
+                        }
+                    });
+
+                    $('.filter-orders select').change(function () {
+                        $('.order-list').hide();
+                        $('.no-order').hide();
+                        $('.list-preloader').show();
+
+                        switch (parseInt($(this).val())) {
+                            case 0:
+                                showAll();
+                                break;
+                            case 1:
+                                showThisYear();
+                                break;
+                            case 5:
+                                showLastFive();
+                                break;
+                            case 6:
+                                filterDayWise(180);
+                                break;
+                            case 15:
+                                filterDayWise(15);
+                                break;
+                            case 30:
+                                filterDayWise(30);
+                                break;
+                            default:
+                                break;
+
+                        }
+                    });
+
+
+                });
+            </script>
+        }
+        else
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    @T("Account.CustomerOrders.NoOrders")
+                </div>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,16 @@
+﻿@model IList<CategorySimpleModel>
+
+@foreach (var category in Model)
+{
+    <li>
+        <a href="@Url.RouteUrl("Category", new { SeName = category.SeName })" title="@category.RollOverText">
+            @category.Name
+        </a>
+        @if (category.HaveSubCategories)
+        {
+            <ul>
+                @await Html.PartialAsync("_Category.MegaMenu.Child", category.SubCategories)
+            </ul>
+        }
+    </li>
+}

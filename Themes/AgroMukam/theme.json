@@ -1,0 +1,7 @@
+﻿{
+  "SystemName": "AgroMukam",
+  "FriendlyName": "Agro Mukam",
+  "SupportRTL": true,
+  "PreviewImageUrl": "~/Themes/AgroMukam/preview.jpg",
+  "PreviewText": "A custom theme for AgroMukam website"
+}

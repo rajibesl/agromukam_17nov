@@ -1,0 +1,161 @@
+﻿@model Nop.Plugin.Widgets.NivoSlider.Models.PublicInfoModel
+@{
+    Layout = "";
+    Html.AddCssFileParts("~/Plugins/Widgets.NivoSlider/Content/banner.css");
+
+    var defaultCaption = "Default Caption";
+    var defaultText = "Default Text Content Below Caption";
+}
+<style>
+    .carousel-indicators {
+        margin-right: 35% !important;
+        margin-left: 35% !important;
+    }
+    .bcr-thumb {
+        width: 40px;
+        height: 40px;
+        border-radius: 4px;
+    }
+
+    .bcr-top-txt,
+    .bcr-categories span,
+    .bcr-bottom-txt,
+    .bcr-bottom a,
+    #tCaption, #tText {
+        text-shadow: 2px 5px 5px rgb(0 0 0 / 30%), 0px -4px 7px rgb(255 255 255 / 30%);
+    }
+
+    .bcr-top-txt {
+        font-size: 16px;
+        line-height: 22px;
+    }
+</style>
+<section>
+    <div id="homepageBanner"
+         class="carousel slide carousel-fade"
+         data-ride="carousel"
+         data-interval="false">
+
+        <input type="hidden" asp-for="Interval" />
+
+        <div class="container-fluid banner-content">
+            <div class="row">
+                <div class="col-12 col-lg-6 offset-lg-1 pt-5 text-white">
+                    <h4 class="mb-4 pt-5 pt-lg-3 text-white text-center text-lg-left txt-shadow-x">
+                        @Model.StaticTagLineText
+                    </h4>
+                    <div class="text-center text-lg-left typed-text-wrapper mt-5">
+                        <h2 id="tCaption"></h2>
+                        <h4 id="tText" class="mt-3"></h4>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-xl-3 offset-xl-1 d-none d-lg-block">
+                    <div class="banner-caption-right pt-5 pl-3 pr-3 text-white text-center position-relative"
+                         style="height: @(Model.BannerHeight + "px");">
+                        <h5 class="text-white bcr-top-txt"> @Model.BoxTextTop </h5>
+                        <div class="bcr-categories d-flex flex-row flex-wrap justify-content-center mt-3">
+                            @foreach (var item in Model.BoxItems)
+                            {
+                                <div class="d-flex my-2 mx-1" style="width: 70px;">
+                                    <a href="@item.Link" class="d-flex flex-column justify-content-center align-items-center">
+                                        <div class="bg-white shadow bcr-thumb">
+                                            <img src="@item.Image"
+                                             alt=""
+                                             class="img-fluid p-1 m-auto d-block"
+                                             loading="lazy">
+                                        </div>
+                                        <div class="mt-1">
+                                            <span>@item.Text</span>
+                                        </div>
+                                    </a>
+                                </div>
+                                @*<div class="bg-white rounded mx-2 my-3" style="width: 70px; height: 45px;">
+                            <a href="@item.Link">
+                            <img src="@item.Image" alt="" class="img-fluid p-2 m-auto d-block" loading="lazy">
+                            <span>@item.Text</span>
+                            </a>
+                            </div>*@
+                            }
+                        </div>
+                        <div class="bcr-bottom pb-4 pl-3 pr-3">
+                            <h6 class="text-white bcr-bottom-txt">@Model.BoxTextBottom</h6>
+                            <a href="@(!string.IsNullOrEmpty(Model.BoxButtonLink) ? Model.BoxButtonLink : Url.RouteUrl("AgroProductRequestAll"))"
+                               class="btn bg-light-green text-white rounded-0 mt-3 shadow">
+                                @Model.BoxButtonText
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.ShowDots)
+        {
+            <ol class="carousel-indicators d-flex align-items-center">
+                @for (int i = 0; i < Model.Slides.Count; i++)
+                {
+                    <li data-target="#homepageBanner"
+                data-slide-to="@i"
+                class="@(i == 0 ? "active" : "")"></li>
+                }
+            </ol>
+        }
+
+        <div class="carousel-inner">
+            @for (int i = 0; i < Model.Slides.Count; i++)
+            {
+                var slide = Model.Slides[i];
+                <div class="carousel-item @(i == 0 ? "active" : "")"
+                 style="height: @(Model.BannerHeight + "px");">
+                    <img src="@slide.Image"
+                     class="d-block w-100"
+                     alt="...">
+                    <span id="typed-caption-@i">
+                        <span>
+                            @if (!string.IsNullOrEmpty(slide.Text))
+                            {
+                                @slide.Text
+                            }
+                            else
+                            {
+                                @defaultCaption
+                            }
+                        </span>
+                    </span>
+                    <span id="typed-text-@i">
+                        <span>
+                            @if (!string.IsNullOrEmpty(slide.AltText))
+                            {
+                                @slide.AltText
+                            }
+                            else
+                            {
+                                @defaultText
+                            }
+                        </span>
+                    </span>
+                </div>
+            }
+        </div>
+
+        @if (Model.ShowArrows)
+        {
+            <a class="carousel-control-prev"
+           href="#homepageBanner"
+           role="button"
+           data-slide="prev">
+                <i class="fas fa-chevron-left fa-2x"></i>
+            </a>
+            <a class="carousel-control-next"
+           href="#homepageBanner"
+           role="button"
+           data-slide="next">
+                <i class="fas fa-chevron-right fa-2x"></i>
+            </a>
+        }
+
+    </div>
+</section>
+
+<script src="/Plugins/Widgets.NivoSlider/Scripts/typed.js" asp-location="Footer" defer></script>
+<script src="/Plugins/Widgets.NivoSlider/Scripts/banner.js" asp-location="Footer" defer></script>

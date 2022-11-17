@@ -1,0 +1,63 @@
+﻿@{
+    Layout = "_Root.Head";
+}
+@await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.BodyStartHtmlTagAfter })
+@await Html.PartialAsync("_Notifications")
+@await Html.PartialAsync("_JavaScriptDisabledWarning")
+@await Html.PartialAsync("_OldInternetExplorerWarning")
+<div class="master-wrapper-page">
+    @*@await Component.InvokeAsync("AdminHeaderLinks")*@
+    <header class="section-header bg-white">
+        @await Html.PartialAsync("_Header")
+        <script asp-location="Footer">
+        (function () {
+            AjaxCart.init(false, '.cart-qty', '.wishlist-qty', '#flyout-cart');
+        })();
+        </script>
+    </header>
+    <div class="auth-page-nav container-fluid pt-2">
+        <div class="row">
+            <div class="col">
+                <div class="d-flex justify-content-center align-items-center shadow" 
+                     style="background: #ccc; width: 50px; height: 50px; border-radius: 25px;">
+                    <a href="/">
+                        <img src="/Themes/AgroMukam/Content/images/logo-new-small.png"
+                             class="logo logo-small"
+                             alt=""
+                             style="max-width: 30px;"/>
+                    </a>
+                </div>
+            </div>
+            <div class="col text-right">
+                <span class="cursor-pointer auth-page-go-back">
+                    <span class="fa-stack fa-x">
+                        <i class="fas fa-circle fa-stack-2x text-muted"></i>
+                        <i class="fas fa-times fa-stack-1x fa-inverse"></i>
+                    </span>
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="go-to-top" style="display: none;">
+        <button class="btn bg-light-green text-white rounded-0 shadow">
+            <i class="fas fa-chevron-up"></i>
+        </button>
+    </div>
+    <section>
+        <div class="master-wrapper-content w-100">
+            @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ContentBefore })
+
+            @if (IsSectionDefined("Breadcrumb"))
+            {
+                @RenderSection("Breadcrumb")
+            }
+            <div class="master-column-wrapper">
+                @RenderBody()
+            </div>
+            @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.ContentAfter })
+        </div>
+    </section>
+    @await Component.InvokeAsync("Footer")
+</div>
+@await Component.InvokeAsync("EuCookieLaw")
+@await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.BodyEndHtmlTagBefore })

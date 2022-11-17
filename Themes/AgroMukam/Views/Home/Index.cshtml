@@ -1,0 +1,18 @@
+﻿@{
+    Layout = "_ColumnsOne";
+
+    //page class
+    Html.AppendPageCssClassParts("html-home-page");
+}
+<div class="page home-page">
+    <div class="page-body">
+        @await Component.InvokeAsync("Widget", new { widgetZone = PublicWidgetZones.HomepageTop })
+        @*@await Html.PartialAsync("_CustomSearchBox")*@
+        @await Component.InvokeAsync("Widget", new { widgetZone = "agroads_navigation" })
+        @await Component.InvokeAsync("Widget", new { widgetZone = "agroads_flash_sale_deal_mini" })
+        @await Component.InvokeAsync("Widget", new { widgetZone = "agroads_category_product_collection" })
+        @await Component.InvokeAsync("Widget", new { widgetZone = "agroads_featured_product_mini" })
+        @*@await Html.PartialAsync("_CustomGrid")*@
+        @*@await Html.PartialAsync("_RecommendedProducts")*@
+    </div>
+</div>

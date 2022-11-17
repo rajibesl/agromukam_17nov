@@ -1,0 +1,19 @@
+﻿@{
+    Layout = "_ColumnsOne";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.Register").Text);
+    //page class
+    Html.AppendPageCssClassParts("html-registration-result-page");
+}
+<div class="page registration-result-page">
+    <div class="page-body container mt-5">
+        <div class="result card border-0 rounded-0 shadow">
+            <div class="card-body">
+                <h1 class="mb-2">@T("Account.AdvisorRegisterResult")</h1>
+                <hr />
+                @T("Account.AdvisorRegisterResultContent")
+            </div>
+        </div>
+    </div>
+</div>

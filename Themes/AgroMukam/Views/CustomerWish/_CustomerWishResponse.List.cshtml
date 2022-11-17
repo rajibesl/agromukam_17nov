@@ -1,0 +1,61 @@
+﻿@model IList<CustomerWishResponseListModel>
+@inject Nop.Services.Customers.ICustomerService _customerService
+@inject Nop.Services.Customers.ICustomerWishRequestService _wishRequestService
+@inject Nop.Services.Vendors.IVendorService _vendorService
+@inject Nop.Core.IWorkContext _workContext
+
+
+<hr class="mt-4 mb-2" style="border: none; height: 1px; background: #eee;" />
+@if (Model.Count > 0)
+{
+    var requestId = Model.FirstOrDefault().RequestId;
+    var wishRequest = _wishRequestService.GetCustomerWishRequestById(requestId);
+    var showApproveButton = wishRequest.CustomerId == (await _workContext.GetCurrentCustomerAsync()).Id;
+
+    <h3 class="text-muted mb-2"> Responses </h3>
+    foreach (var item in Model)
+    {
+        <div class="card rounded-0 shadow-smx mb-2" data-id="@item.Id">
+            <div class="card-body p-2">
+
+                @if (item.VendorId.HasValue)
+                {
+                    var vendor = await _vendorService.GetVendorByIdAsync((int)item.VendorId);
+                    <span class="text-muted font-weight-normal">
+                        <small> @*@vendor.SystemName*@ </small>
+                        <small> @vendor.Name </small>
+                    </span>
+                }
+                else
+                {
+                    var id = (await _workContext.GetCurrentCustomerAsync()).Id;
+                    var customer = await _customerService.GetCustomerByIdAsync(id);
+                    <span class="text-muted font-weight-normal">
+                        <small> @customer.SystemName </small>
+                    </span>
+                }
+                <hr class="mt-2 mb-2" style="border: none; height: 1px; background: #eee;" />
+                <p class="mt-2"> @item.CommentText </p>
+                <h4 class="mt-2"> Asking Price: @item.ProposedPrice.ToString("#0.00") </h4>
+                <hr class="mt-2 mb-2" style="border: none; height: 1px; background: #eee;" />
+                <div class="row">
+                    <div class="col @(showApproveButton ? "pt-2" : "")">
+                        <span class="text-muted font-weight-normal"><small> Estimated Delivery by: @item.DeliveryEndDateUtc.ToString("dd MMMM yyyy hh: mm tt") </small></span>
+                    </div>
+                    @if (showApproveButton)
+                    {
+                        <div class="col-auto">
+                            <button class="btn bg-greenish text-white btn-sm rounded-0 shadow">
+                                Approve
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <h3 class="text-center text-muted"> No response yet</h3>
+}

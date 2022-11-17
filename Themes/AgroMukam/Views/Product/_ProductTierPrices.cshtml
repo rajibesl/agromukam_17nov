@@ -1,0 +1,74 @@
+﻿@model IList<ProductDetailsModel.TierPriceModel>
+@{
+    //When there is just one tier (with  qty 1), there are no actual savings in the list.
+    var displayTierPrices = Model.Count > 0 && !(Model.Count == 1 && Model[0].Quantity <= 1);
+    var oPrice = this.ViewData["originalPrice"];
+    var originalPrice = Convert.ToInt32(oPrice);
+}
+
+@functions{
+    public string GetPromoText(ProductDetailsModel.TierPriceModel promo, decimal price, bool fullText)
+    {
+        var promoPrice = Decimal.Parse(promo.Price.Replace('৳', ' ').Replace('$', ' '));
+
+        var spend = price * promo.Quantity;
+        var get = spend - promoPrice;
+
+        var strSpend = string.Format("{0:0}", spend);
+        var strGet = string.Format("{0:0}", get);
+
+        var text = "Get ৳" + strGet + " off!";
+        var fText = "Spend ৳" + strSpend + " to get ৳" + strGet + " off!";
+
+        return fullText ? fText : text;
+    }
+}
+@if (displayTierPrices)
+{
+    <div class="row product-tier-prices mt-4 mb-4 position-relative">
+        <div class="col-auto align-self-center">
+            Promotions
+        </div>
+        <div class="col">
+            <div class="dropdown">
+                <button class="btn btn-danger btn-block btn-sm text-left rounded-0 m-auto shadow"
+                        type="button"
+                        data-toggle="dropdown"
+                        data-display="static"
+                        id="tierPricesDropdown"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                        style="max-width: 360px;">
+                    @{
+                        var mainPromo = Model[0];
+                        var title = GetPromoText(mainPromo, originalPrice, true);
+                    }
+                    <i class="fas fa-bullhorn mr-2"></i>
+                    @title
+                    <i class="fas fa-chevron-down toggle-icon float-right mt-1 ml-5"></i>
+                </button>
+                <div
+                     class="dropdown-menu dropdown-menu-right border-0 rounded-0 shadow"
+                     aria-labelledby="tierPricesDropdown">
+
+                    <ul class="list-group list-group-flush">
+                        @foreach (var tierPrice in Model)
+                        {
+                            var promoText = GetPromoText(tierPrice, originalPrice, true);
+                            var promoTitle = GetPromoText(tierPrice, originalPrice, false);
+
+                            <li class="list-group-item">
+                                <h6 class="text-light-green">
+                                    @promoTitle
+                                    <br>
+                                    <small class="text-deep-green">@promoText</small>
+                                </h6>
+                            </li>
+                        }
+                    </ul>
+
+                </div>
+            </div>
+        </div>
+    </div>
+}

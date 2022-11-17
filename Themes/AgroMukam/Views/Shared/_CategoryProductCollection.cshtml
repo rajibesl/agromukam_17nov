@@ -1,0 +1,41 @@
+﻿@model CategoryProductCollectionViewModel
+
+@using Nop.Services.Media
+@inject IPictureService pictureService
+
+@if (Model.Products.Count > 0)
+{
+    <div class="row row-cols-3 row-cols-md-5 row-cols-xl-5 row-cols-sm-4 no-gutters">
+
+        @foreach (var item in Model.Products)
+        {
+            <div class="col cpc-item-box">
+                <a href="@item.SeName" class="card card-product-grid rounded-0 m-0">
+                    <div class="img-wrap p-2">
+                        @{
+                            var picture = (await pictureService.GetPicturesByProductIdAsync(item.Id))
+                                .FirstOrDefault();
+                            var imgSrc = picture != null
+                                ? await pictureService.GetPictureUrlAsync(picture.Id)
+                                : "/Themes/AgroMukam/Content/images/no-image.png";
+                        }
+                        <img src="@imgSrc">
+                    </div>
+                    <div class="info-wrap text-center p-2">
+                        <p class="title text-truncate">@item.Name</p>
+                        <div class="price-wrap text-center">
+                            <span class="price text-light-green"> @item.ProductPrice.Price </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+
+    </div>
+}
+else
+{
+    <div class="d-flex align-items-center h-100">
+        <h6 class="w-100 text-center text-muted">No Products Available</h6>
+    </div>
+}

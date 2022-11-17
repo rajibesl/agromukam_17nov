@@ -1,0 +1,59 @@
+﻿@model List<CategorySimpleModel>
+@using Nop.Services.Media
+@inject IPictureService _pictureService
+
+
+@{
+    var categoriesWithChild = Model.Where(x => x.SubCategories.Count > 0).ToList();
+    var categoriesWithoutChild = Model.Where(x => x.SubCategories.Count == 0).ToList();
+    var id = Model.FirstOrDefault().Id;
+}
+
+@if (categoriesWithoutChild.Count > 0)
+{
+    <div class="row no-gutters">
+        @foreach (var category in categoriesWithoutChild)
+        {
+        <div class="col-4 px-1 py-1" onclick="setLocation('/@category.SeName')">
+            <div class="card-banner cursor-pointer"
+                 style="height:100px; background-image: url('@category.PictureModel.ImageUrl');">
+            </div>
+            <p class="card-title w-100 text-center">@category.Name</p>
+        </div>
+        }
+    </div>
+}
+
+@if (categoriesWithChild.Count > 0)
+{
+
+    <div class="accordion" id="accordion-@id">
+        @foreach (var category in categoriesWithChild)
+        {
+            <div class="card rounded-0 border-0 mt-1">
+                <div class="card-header p-0"
+                     id="heading-@category.Id">
+                    <button class="btn btn-block text-left rounded-0 collapsed"
+                            type="button"
+                            data-toggle="collapse"
+                            data-target="#collapse-@category.Id"
+                            aria-expanded="true"
+                            aria-controls="collapse-@category.Id">
+                        <span onclick="setLocation('/@category.SeName')"
+                              class="pr-3">@category.Name</span>
+                        <i class="fas fa-chevron-down float-right mt-1"></i>
+                    </button>
+                </div>
+
+                <div id="collapse-@category.Id"
+                     class="collapse"
+                     aria-labelledby="heading-@category.Id"
+                     data-parent="#accordion-@id">
+                    <div class="card-body p-1">
+                        @await Html.PartialAsync("_SubCategories", category.SubCategories)
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

@@ -1,0 +1,28 @@
+﻿@model RegisterResultModel
+@{
+    Layout = "_ColumnsOne";
+
+    //title
+    Html.AddTitleParts(T("PageTitle.Register").Text);
+    //page class
+    Html.AppendPageCssClassParts("html-registration-result-page");
+}
+<form asp-route="RegisterResult" asp-route-returnurl="@Context.Request.Query["ReturnUrl"]" method="post">
+    <div asp-validation-summary="ModelOnly" class="message-error"></div>
+    <div class="page registration-result-page">
+        <div class="container pt-5">
+            <div class="row">
+                <div class="col-lg-8 offset-lg-2 col-xl-6 offset-xl-3">
+                    <div class="card rounded-0 border-0 shadow-sm">
+                        <div class="card-body text-center p-5">
+                            <h4 class="text-light-green">Your registration completed</h4>
+                            <button class="btn bg-light-green text-white rounded-0 shadow mt-4">
+                                Continue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
